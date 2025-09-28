@@ -1,0 +1,19 @@
+{
+  "name": "myportfolio-backend",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.2",
+    "@types/node": "^24.5.2",
+    "install": "^0.13.0",
+    "prisma": "^6.16.2",
+    "tsx": "^4.20.6"
+  }
+}
