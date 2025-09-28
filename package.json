@@ -3,15 +3,30 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/dotenv": "^8.2.3",
+    "@types/express": "^5.0.3",
+    "ts-node-dev": "^2.0.0"
   },
   "peerDependencies": {
     "typescript": "^5.9.2"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
+    "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.19",
     "@types/node": "^24.5.2",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
     "install": "^0.13.0",
     "prisma": "^6.16.2",
     "tsx": "^4.20.6"
