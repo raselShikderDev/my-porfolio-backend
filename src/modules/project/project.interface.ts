@@ -1,4 +1,6 @@
-interface IProject {
+import { IUser } from "../users/user.interface";
+
+export interface IProject {
   id: number;
   title: string;
   description: string;

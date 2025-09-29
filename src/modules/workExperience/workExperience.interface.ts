@@ -1,4 +1,6 @@
-interface IWorkExperince {
+import { IUser } from "../users/user.interface";
+
+export interface IWorkExperince {
   id: number;
   companyName: string;
   role: string;

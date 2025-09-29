@@ -1,6 +1,9 @@
+import { IBlog } from "../blog/blog.interface";
+import { IProject } from "../project/project.interface";
+import { IWorkExperince } from "../workExperience/workExperience.interface";
 
 
-interface IUser {
+export interface IUser {
   id: number;
   name: string;
   email: string;
@@ -14,7 +17,7 @@ interface IUser {
   twitter: string;
   createdAt: Date;
   updatedAt: Date;
-  Blog: IBlog[];
-  Project: string[];
-  WorkExperince: string[];
+  Blog?: IBlog[];
+  Project?: IProject[];
+  WorkExperince?: IWorkExperince[];
 }
