@@ -10,32 +10,23 @@ datasource db {
 // user info
 model User {
   id            Int             @id @default(autoincrement())
+  name        String
   email         String
   password      String
   avater        String?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @default(now())
-  Blog          Blog[]
-  Project       Project[]
-  WorkExperince WorkExperince[]
-  AboutMe       AboutMe[]
-}
-
-// About me Personal info
-model AboutMe {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String
   skills      String[]
   address     String   @db.VarChar(150)
   phone       Int
   github      String
   linkedin    String
-  email       String
   twitter     String
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id])
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @default(now())
+  Blog          Blog[]
+  Project       Project[]
+  WorkExperince WorkExperince[]
 }
+
 
 model Blog {
   id        Int      @id @default(autoincrement())
@@ -43,6 +34,7 @@ model Blog {
   content   String?
   images    String[]
   published Boolean  @default(false)
+  publishedDate DateTime  @default(now())
   slug      String
   authorId  Int
   author    User     @relation(fields: [authorId], references: [id])

@@ -4,10 +4,10 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "test": "echo \"No tests configured yet\"",
+    "dev": "bun --watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "bun run dist/server.js"
   },
   "devDependencies": {
     "@types/bun": "latest",
