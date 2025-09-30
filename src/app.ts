@@ -2,6 +2,7 @@ import express, { type Application, type Request, type Response } from "express"
 import cors from "cors"
 import compression from "compression"
 import { envVars } from "./configs/envVars.js"
+import notFound from "./middlewares/notFound.js"
 
 
 const app:Application = express()
@@ -19,5 +20,7 @@ app.get("/", (req:Request, res:Response)=>{
     res.send("Welcome to th my porfolio - Rasel Shikder")
 })
 
+
+app.use(notFound)
 
 export default app
