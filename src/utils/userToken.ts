@@ -1,6 +1,5 @@
 import { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../configs/envVars";
-import { IUser } from "../modules/users/user.interface";
 import { generateAccessToken } from "./jwt";
 
 const createUserTokens = async (jwtPayload:JwtPayload) => {

@@ -1,8 +1,8 @@
 import { Response } from "express";
 
-type TTokens = { accessToken?: string; refreshToken?: string };
+interface ITokens { accessToken?: string; refreshToken?: string };
 
-export const setAuthCookies = async (res: Response, tokens: TTokens) => {
+export const setAuthCookies = async (res: Response, tokens: ITokens) => {
   if (tokens.accessToken) {
     res.cookie("accessToken", tokens.accessToken, {
       httpOnly: true,

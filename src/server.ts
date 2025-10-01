@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import http, { Server } from "http";
 import { envVars } from "./configs/envVars.js";
 import app from "./app.js";
@@ -10,6 +11,7 @@ async function connectDB() {
   try {
     await prisma.$connect();
     console.log("Database sucssfully connected");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.log(`Database connection failed ${error.message}`);
     process.exit(1);

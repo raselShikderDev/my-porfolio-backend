@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "../../configs/db"
 
 const getMe = async ()=>{
-    
+    return
 }
 
 const create = async(payload:any)=>{
@@ -13,5 +14,6 @@ const create = async(payload:any)=>{
 }
 
 export const userService ={
-create
+create,
+getMe
 }

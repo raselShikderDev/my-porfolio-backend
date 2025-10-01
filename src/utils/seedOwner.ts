@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable no-console */
 import { prisma } from "../configs/db";
-import { IUser } from "../modules/users/user.interface";
 import bcrypt from "bcrypt";
 // import avater from "../assets/avatar.svg";
 import { constraints } from "../constraints/constraints";
@@ -32,7 +33,7 @@ export const seedOwner = async () => {
     // avater: avater,
     skills: constraints.skills,
     address: constraints.address,
-    phone: Number(constraints.phone),
+    phone: constraints.phone,
     github: constraints.socialUrl.github,
     linkedin: constraints.socialUrl.linkedin,
     twitter: constraints.socialUrl.twitter,

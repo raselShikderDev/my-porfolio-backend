@@ -18,6 +18,15 @@ const ownerLogin = async (email: string, plainPassword: string) => {
     throw new AppError(StatusCodes.NOT_FOUND, "You are not authorized owner");
   }
 
+  if (existedOwner.isActive === "BLOCKED" || existedOwner.isActive === "INACTIVE") {
+    throw new AppError(StatusCodes.UNAUTHORIZED, `You are ${existedOwner.isActive}! Please activate first`);
+  }
+
+  if (!existedOwner.isVerified) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "Verify before login");
+  }
+
+
   const isValidPassword = await bcrypt.compare(
     plainPassword,
     existedOwner.password
@@ -34,8 +43,6 @@ const ownerLogin = async (email: string, plainPassword: string) => {
     };
 
   const tokens = await createUserTokens(jwtPayload)
-  console.log("existedOwner", existedOwner);
-
   
   return {
     accessToken:tokens.accessToken,

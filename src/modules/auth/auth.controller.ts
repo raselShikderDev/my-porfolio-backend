@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from "express";
 import { asyncFunc } from "../../utils/asyncFync";
 import { sendResonse } from "../../utils/response";
@@ -21,7 +22,7 @@ const ownerLogin = asyncFunc(
     sendResonse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: "Oenser login successfull",
+      message: "Owner successfully logged in ",
       data: ownerCredentials,
     });
   }
