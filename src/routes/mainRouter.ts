@@ -7,11 +7,15 @@ const router = Router()
 
 const mainRoutes =[
     {
-        path:"/user",
+        path:"/users",
         route:userRoute,
     },
     {
         path:"/auth",
+        route:authRoute,
+    },
+    {
+        path:"/projects",
         route:authRoute,
     },
 ]

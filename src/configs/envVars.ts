@@ -14,6 +14,10 @@ interface IEnvVars {
   JWT_ACCESS_EXPIRES: string;
   JWT_REFRESH_SECRET: string;
   JWT_REFRESH_EXPIRES: string;
+  CLOUDINARY_NAME: string;
+  CLOUDINARY_API_KEY: string;
+  CLOUDINARY_API_SECRET: string;
+  CLOUDINARY_URL: string;
 }
 
 const envvarriables = (): IEnvVars => {
@@ -29,6 +33,10 @@ const envvarriables = (): IEnvVars => {
     "JWT_REFRESH_SECRET",
     "JWT_ACCESS_EXPIRES",
     "JWT_ACCESS_SECRET",
+    "CLOUDINARY_NAME",
+    "CLOUDINARY_API_KEY",
+    "CLOUDINARY_API_SECRET",
+    "CLOUDINARY_URL",
   ];
 
   varriables.map((envItem: string) => {
@@ -49,6 +57,10 @@ const envvarriables = (): IEnvVars => {
     JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET as string,
     JWT_ACCESS_EXPIRES: process.env.JWT_ACCESS_EXPIRES as string,
     JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET as string,
+    CLOUDINARY_NAME: process.env.CLOUDINARY_NAME as string,
+    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY as string,
+    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET as string,
+    CLOUDINARY_URL: process.env.CLOUDINARY_URL as string,
   };
 };
 

@@ -12,6 +12,7 @@ const app:Application = express()
 app.use(cors())
 app.use(compression())
 app.use(express.json())
+app.use(express.urlencoded({extended:true}));
 
 app.use(cors({
     origin:envVars.FRONTEND_URL as string,

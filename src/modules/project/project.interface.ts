@@ -9,7 +9,7 @@ export interface IProject {
   liveUrl: string;
   githubUrl: string;
   userId: string;
-  user: IUser;
+  user?: IUser;
   createdAt: Date;
   updatedAt: Date;
 }
