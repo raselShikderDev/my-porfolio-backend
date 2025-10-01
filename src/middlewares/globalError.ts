@@ -1,6 +1,5 @@
 import { Prisma } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
-import { StatusCodes } from "http-status-codes";
 import { envVars } from "../configs/envVars";
 import AppError from "../errorHelper/error";
 
@@ -10,7 +9,6 @@ const globalError = async (
   res: Response,
   next: NextFunction
 ) => {
-  // console.log(err);
 
   let message: string = "Something went wrong!";
   let statusCode: number = 500;

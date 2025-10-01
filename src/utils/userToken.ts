@@ -1,13 +1,10 @@
+import { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../configs/envVars";
 import { IUser } from "../modules/users/user.interface";
 import { generateAccessToken } from "./jwt";
 
-const createUserTokens = async (user: IUser) => {
-  const jwtPayload = {
-    id: user.id,
-    email: user.email,
-    role: user.role,
-  };
+const createUserTokens = async (jwtPayload:JwtPayload) => {
+  
   const accessToken = await generateAccessToken(
     jwtPayload,
     envVars.JWT_ACCESS_SECRET as string,

@@ -27,7 +27,7 @@ model User {
   avater        String?
   skills        String[]
   address       String          @db.VarChar(150)
-  phone         BigInt
+  phone         String
   isActive      IsActive        @default(ACTIVE)
   role          Role            @default(OWNER)
   isVerified    Boolean         @default(true)

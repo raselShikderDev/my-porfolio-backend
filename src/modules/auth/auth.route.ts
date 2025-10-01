@@ -6,4 +6,4 @@ const router = Router()
 
 router.post("/admin-login", authController.ownerLogin)
 
-export const userRouter = router
+export const authRoute = router

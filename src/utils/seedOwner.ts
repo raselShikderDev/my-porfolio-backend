@@ -13,6 +13,8 @@ export const seedOwner = async () => {
     },
   });
 
+  console.log("existedOwner", existedOwner);
+
   if (existedOwner) {
     console.log(`Owner already exists with ${existedOwner.email}`);
     return;

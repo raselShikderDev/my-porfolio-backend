@@ -3,6 +3,10 @@ import { prisma } from "../../configs/db";
 import AppError from "../../errorHelper/error";
 import bcrypt from "bcrypt";
 import createUserTokens from "../../utils/userToken";
+import { JwtPayload } from "jsonwebtoken";
+
+
+
 const ownerLogin = async (email: string, plainPassword: string) => {
   const existedOwner = await prisma.user.findUnique({
     where: {
@@ -23,7 +27,21 @@ const ownerLogin = async (email: string, plainPassword: string) => {
     throw new AppError(StatusCodes.BAD_REQUEST, "Invalid Password");
   }
 
-  const tokens = await createUserTokens(existedOwner)
+  const jwtPayload:JwtPayload = {
+      id: existedOwner.id,
+      email: existedOwner.email,
+      role: existedOwner.role,
+    };
+
+  const tokens = await createUserTokens(jwtPayload)
+  console.log("existedOwner", existedOwner);
+
+  
+  return {
+    accessToken:tokens.accessToken,
+    refreshToken:tokens.refreshToken,
+    data:existedOwner,
+  }
 
 };
 

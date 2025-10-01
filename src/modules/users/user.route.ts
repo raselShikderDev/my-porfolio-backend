@@ -6,4 +6,4 @@ const router = Router()
 
 router.post("/", userController.create)
 
-export const userRouter = router
+export const userRoute = router

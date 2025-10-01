@@ -10,10 +10,8 @@ export enum isActive {
 }
 
 export enum Role {
-  USER = "USER",
-  ADMIN = "ADMIN",
-  SUPER_ADMIN = "SUPER_ADMIN",
-  GUIDE = "GUIDE",
+  OWNER = "OWNER",
+  MANAGER = "MANAGER",
 }
 
 export interface IUser {
@@ -21,10 +19,10 @@ export interface IUser {
   name: string;
   email: string;
   password: string;
-  avater?: string;
+  avater?: string | null;
   skills: string[];
   address: string;
-  phone: number;
+  phone: string;
   isActive: IsActive;
   role: Role;
   isVerified: boolean;
