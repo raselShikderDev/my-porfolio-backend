@@ -1,7 +1,7 @@
 import { prisma } from "../configs/db";
 import { IUser } from "../modules/users/user.interface";
 import bcrypt from "bcrypt";
-import avater from "../assets/avater.svg";
+// import avater from "../assets/avatar.svg";
 import { constraints } from "../constraints/constraints";
 
 export const seedOwner = async () => {
@@ -27,7 +27,7 @@ export const seedOwner = async () => {
     name: "Rasel Shikder",
     email: process.env.OWNER_EMAIL as string,
     password: hashedPassword,
-    avater: avater,
+    // avater: avater,
     skills: constraints.skills,
     address: constraints.address,
     phone: Number(constraints.phone),

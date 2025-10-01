@@ -7,6 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  MANAGER
+  OWNER
+}
+
+enum IsActive {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
 // user info
 model User {
   id            Int             @id @default(autoincrement())
@@ -17,6 +28,9 @@ model User {
   skills        String[]
   address       String          @db.VarChar(150)
   phone         BigInt
+  isActive      IsActive        @default(ACTIVE)
+  role          Role            @default(OWNER)
+  isVerified    Boolean         @default(true)
   github        String
   linkedin      String
   twitter       String
