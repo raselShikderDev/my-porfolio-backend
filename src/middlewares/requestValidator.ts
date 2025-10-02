@@ -16,6 +16,9 @@ export const requestValidator =
         req.body = req.body.data;
       }
       await zodSchema.parseAsync(req.body);
+      if (envVars.NODE_ENV === 'development') {
+        console.log('Data from received request is validated');
+      }
       next();
     } catch (error) {
       if (envVars.NODE_ENV === 'development')

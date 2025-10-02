@@ -1,7 +1,7 @@
 import { IsActive } from "@prisma/client";
 import { IBlog } from "../blog/blog.interface";
 import { IProject } from "../project/project.interface";
-import { IWorkExperince } from "../workExperience/workExperience.interface";
+import { IWorkExperince } from "../workExperience/workExp.interface";
 
 export enum isActive {
   ACTIVE = "ACTIVE",

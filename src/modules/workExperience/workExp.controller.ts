@@ -3,94 +3,95 @@ import { NextFunction, Request, Response } from 'express';
 import { sendResonse } from '../../utils/response';
 import { StatusCodes } from 'http-status-codes';
 import { asyncFunc } from '../../utils/asyncFync';
-import { projectServices } from './project.service';
+import { workExpServices } from './workExp.service';
 
 
 
-// Creating a project
-const createProject = asyncFunc(
+// Creating a WorkExp
+const createWorkExp = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    const newProject = await projectServices.createProject(req.body);
+    
+    const newWorkExp = await workExpServices.createWorkExp(req.body);
     sendResonse(res, {
       success: true,
       statusCode: StatusCodes.CREATED,
-      message: 'New project successfully created',
-      data: newProject,
+      message: 'New Work experince successfully created',
+      data: newWorkExp,
     });
   },
 );
 
 
-// Edit a project
-const editProject = asyncFunc(
+// Edit a WorkExp
+const editWorkExp = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
     // console.log("req.body in controller: ", req.body);
-    const projectId = Number(req.params.id);
-    const newProject = await projectServices.editProject(projectId, req.body);
+    const WorkExpId = Number(req.params.id);
+    const newWorkExp = await workExpServices.editWorkExp(WorkExpId, req.body);
     sendResonse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: 'Project successfully edited',
-      data: newProject,
+      message: 'Work experince successfully edited',
+      data: newWorkExp,
     });
   },
 );
 
 
-// get a project
-const removeProject = asyncFunc(
+// get a WorkExp
+const removeWorkExp = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
     // console.log("req.body in controller: ", req.body);
     const userId = Number(req.params.id);
-    const newProject = await projectServices.removeProject(userId);
+    const newWorkExp = await workExpServices.removeWorkExp(userId);
     sendResonse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: 'Project successfully deleted',
-      data: newProject,
+      message: 'Work experince successfully deleted',
+      data: newWorkExp,
     });
   },
 );
 
 
-// get a project
-const getProject = asyncFunc(
+// get a WorkExp
+const getWorkExp = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
     // console.log("req.body in controller: ", req.body);
-    const projectId = Number(req.params.id);
-    const newProject = await projectServices.getProject(projectId);
+    const WorkExpId = Number(req.params.id);
+    const newWorkExp = await workExpServices.getWorkExp(WorkExpId);
     sendResonse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: 'Project successfully retrived',
-      data: newProject,
+      message: 'Work experince successfully retrived',
+      data: newWorkExp,
     });
   },
 );
 
 
-// get all project
-const getAllProject = asyncFunc(
+// get all WorkExp
+const getAllWorkExp = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
     // console.log("req.body in controller: ", req.body);
-    const projects = await projectServices.getAllProject();
+    const workExp = await workExpServices.getAllWorkExp();
     sendResonse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: 'Project successfully retrived',
-      data: projects.data,
+      message: 'Works experinces successfully retrived',
+      data: workExp.data,
       meta:{
-        total:projects.total
+        total:workExp.total
       }
     });
   },
 );
 
 
-export const projectController = {
-  createProject,
-  editProject,
-  getProject,
-  getAllProject,
-  removeProject,
+export const workExpController = {
+  createWorkExp,
+  editWorkExp,
+  getWorkExp,
+  getAllWorkExp,
+  removeWorkExp,
 };
