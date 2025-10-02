@@ -6,7 +6,7 @@ export interface IWorkExperince {
   role: string;
   descreption: string;
   userId: number;
-  user: IUser;
+  user?: IUser;
   startDate: Date;
   endDate: Date;
 }
