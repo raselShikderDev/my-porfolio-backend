@@ -1,3 +1,55 @@
-export const seedOwner = async()=>{
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable no-console */
+import { prisma } from '../configs/db';
+import bcrypt from 'bcrypt';
+// import avater from "../assets/avatar.svg";
+import { constraints } from '../constraints/constraints';
+import { envVars } from '../configs/envVars';
 
-} 
+export const seedOwner = async () => {
+  if (envVars.NODE_ENV === 'development') console.log('Checking existed Owner');
+
+  const existedOwner = await prisma.user.findUnique({
+    where: {
+      email: process.env.OWNER_EMAIL as string,
+    },
+  });
+
+  if (existedOwner) {
+    if (envVars.NODE_ENV === 'development') console.log(`Owner already exists with ${existedOwner.email}`);
+    return;
+  }
+
+  const hashedPassword = await bcrypt.hash(
+    process.env.OWNER_PASSWORD as string,
+    Number(process.env.BCRYPT_SALT as string),
+  );
+
+  const ownerPayload = {
+    name: 'Rasel Shikder',
+    email: process.env.OWNER_EMAIL as string,
+    password: hashedPassword,
+    // avater: avater,
+    skills: constraints.skills,
+    address: constraints.address,
+    phone: constraints.phone,
+    github: constraints.socialUrl.github,
+    linkedin: constraints.socialUrl.linkedin,
+    twitter: constraints.socialUrl.twitter,
+  };
+
+  try {
+    if (envVars.NODE_ENV === 'development') console.log('Creating Owner...');
+    const owner = await prisma.user.create({
+      data: ownerPayload,
+    });
+    if (!owner) {
+      throw new Error('Creating Owner is failed');
+    }
+    if (envVars.NODE_ENV === 'development') console.log('Owner Sucessfully created');
+
+  } catch (error: any) {
+    console.error('Creating Owner is failed', error.message);
+    throw new Error('Somthing wrong! OwnerShip creation failed');
+  }
+};

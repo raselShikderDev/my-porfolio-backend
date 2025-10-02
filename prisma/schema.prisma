@@ -7,19 +7,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  MANAGER
+  OWNER
+}
+
+enum IsActive {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
 // user info
 model User {
   id            Int             @id @default(autoincrement())
-  name        String
-  email         String
+  name          String
+  email         String          @unique
   password      String
   avater        String?
-  skills      String[]
-  address     String   @db.VarChar(150)
-  phone       Int
-  github      String
-  linkedin    String
-  twitter     String
+  skills        String[]
+  address       String          @db.VarChar(150)
+  phone         String
+  isActive      IsActive        @default(ACTIVE)
+  role          Role            @default(OWNER)
+  isVerified    Boolean         @default(true)
+  github        String
+  linkedin      String
+  twitter       String
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @default(now())
   Blog          Blog[]
@@ -27,20 +41,19 @@ model User {
   WorkExperince WorkExperince[]
 }
 
-
 model Blog {
-  id        Int      @id @default(autoincrement())
-  title     String   @db.VarChar(255)
-  content   String?
-  images    String[]
-  published Boolean  @default(false)
-  publishedDate DateTime  @default(now())
-  slug      String
-  authorId  Int
-  author    User     @relation(fields: [authorId], references: [id])
-  tags      String[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  title         String   @db.VarChar(255)
+  content       String?
+  images        String[]
+  published     Boolean  @default(false)
+  publishedDate DateTime @default(now())
+  slug          String
+  authorId      Int
+  author        User     @relation(fields: [authorId], references: [id])
+  tags          String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Project {
