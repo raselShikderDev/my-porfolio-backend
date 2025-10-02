@@ -7,5 +7,7 @@ const router = Router()
 
 
 router.post("/login", requestValidator(LoginSchema), authController.ownerLogin)
+router.post("/logout", authController.ownerLogOut)
+router.post("/generate-token", authController.generateNewAccessToken)
 
 export const authRoute = router
