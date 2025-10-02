@@ -6,6 +6,7 @@ import { Prisma } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import { envVars } from "../configs/envVars";
 import AppError from "../errorHelper/error";
+import { deleteImageFromCloudinary } from "../configs/cloudinaryConfig";
 
 const globalError = async (
   err: any,
@@ -16,6 +17,17 @@ const globalError = async (
 
   let message: string = "Something went wrong!";
   let statusCode: number = 500;
+
+  // delete singel image from cludianry - (req.file)
+  if(req.file){
+    await deleteImageFromCloudinary(req.file.path)
+  }
+
+  // deleting multiple image from cloudinary - (req.files)
+  if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+    const imagesUrl = (req.files as Express.Multer.File[]).map((file)=> file.path)
+    await Promise.all(imagesUrl.map((url)=> deleteImageFromCloudinary(url)))
+  }
 
   // 1. Known DB errors
   if (err instanceof Prisma.PrismaClientKnownRequestError) {

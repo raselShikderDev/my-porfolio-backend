@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
-import { prisma } from "../configs/db";
-import bcrypt from "bcrypt";
+import { prisma } from '../configs/db';
+import bcrypt from 'bcrypt';
 // import avater from "../assets/avatar.svg";
-import { constraints } from "../constraints/constraints";
+import { constraints } from '../constraints/constraints';
+import { envVars } from '../configs/envVars';
 
 export const seedOwner = async () => {
-  console.log("Checking existed Owner");
+  if (envVars.NODE_ENV === 'development') console.log('Checking existed Owner');
 
   const existedOwner = await prisma.user.findUnique({
     where: {
@@ -14,20 +15,18 @@ export const seedOwner = async () => {
     },
   });
 
-  console.log("existedOwner", existedOwner);
-
   if (existedOwner) {
-    console.log(`Owner already exists with ${existedOwner.email}`);
+    if (envVars.NODE_ENV === 'development') console.log(`Owner already exists with ${existedOwner.email}`);
     return;
   }
 
   const hashedPassword = await bcrypt.hash(
     process.env.OWNER_PASSWORD as string,
-    Number(process.env.BCRYPT_SALT as string)
+    Number(process.env.BCRYPT_SALT as string),
   );
 
   const ownerPayload = {
-    name: "Rasel Shikder",
+    name: 'Rasel Shikder',
     email: process.env.OWNER_EMAIL as string,
     password: hashedPassword,
     // avater: avater,
@@ -40,16 +39,17 @@ export const seedOwner = async () => {
   };
 
   try {
-    console.log("Creating Owner...");
+    if (envVars.NODE_ENV === 'development') console.log('Creating Owner...');
     const owner = await prisma.user.create({
       data: ownerPayload,
     });
     if (!owner) {
-      throw new Error("Creating Owner is failed");
+      throw new Error('Creating Owner is failed');
     }
-    console.log("Owner Sucessfully created");
+    if (envVars.NODE_ENV === 'development') console.log('Owner Sucessfully created');
+
   } catch (error: any) {
-    console.error("Creating Owner is failed", error.message);
-    throw new Error("Somthing wrong! OwnerShip creation failed");
+    console.error('Creating Owner is failed', error.message);
+    throw new Error('Somthing wrong! OwnerShip creation failed');
   }
 };

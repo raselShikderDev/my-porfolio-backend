@@ -11,8 +11,8 @@ const authCheck =
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const accessToken = req.headers.authorization || req.cookies.accessToken;
-
-      const verifiedToken = verifyJwtToken(
+      
+      const verifiedToken = await verifyJwtToken(
         accessToken,
         envVars.JWT_ACCESS_SECRET as string
       ) as JwtPayload;
