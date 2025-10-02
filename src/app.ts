@@ -5,6 +5,7 @@ import { envVars } from "./configs/envVars.js"
 import notFound from "./middlewares/notFound.js"
 import globalError from "./middlewares/globalError.js"
 import { appRoutes } from "./routes/mainRouter.js"
+import cookieParser from "cookie-parser"
 
 
 const app:Application = express()
@@ -13,7 +14,7 @@ app.use(cors())
 app.use(compression())
 app.use(express.json())
 app.use(express.urlencoded({extended:true}));
-
+app.use(cookieParser())
 app.use(cors({
     origin:envVars.FRONTEND_URL as string,
     credentials:true

@@ -31,7 +31,13 @@ const getAllProject = async () => {
     throw new AppError(StatusCodes.NOT_FOUND, 'Projects not found');
   }
 
-  return allProject;
+    const allProjectCount = await prisma.project.count();
+
+
+  return {
+    data:allProject,
+    total:allProjectCount
+  };
 };
 
 // Update a singe project

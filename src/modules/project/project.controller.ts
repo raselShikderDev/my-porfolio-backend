@@ -73,12 +73,15 @@ const getProject = asyncFunc(
 const getAllProject = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
     // console.log("req.body in controller: ", req.body);
-    const newProject = await projectServices.getAllProject();
+    const projects = await projectServices.getAllProject();
     sendResonse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: 'Project successfully retrived',
-      data: newProject,
+      data: projects.data,
+      meta:{
+        total:projects.total
+      }
     });
   },
 );
