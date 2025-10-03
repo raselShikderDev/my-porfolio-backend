@@ -8,6 +8,7 @@ export interface IBlog {
   published: boolean;
   publishedDate:Date;
   slug: string;
+  views: number;
   authorId: number;
   author?: IUser;
   tags: string[];
