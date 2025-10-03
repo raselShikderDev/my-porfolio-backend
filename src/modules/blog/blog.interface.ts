@@ -1,4 +1,4 @@
-import { IUser } from "../users/user.interface";
+import { IUser } from '../users/user.interface';
 
 export interface IBlog {
   id: number;
@@ -6,7 +6,7 @@ export interface IBlog {
   content?: string;
   images: string[];
   published: boolean;
-  publishedDate:Date;
+  publishedDate: Date;
   slug: string;
   views: number;
   authorId: number;
@@ -14,4 +14,13 @@ export interface IBlog {
   tags: string[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface IQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  published?: boolean;
+  orderFeild:string;
+  orderBy? : "asc" | "desc";
 }

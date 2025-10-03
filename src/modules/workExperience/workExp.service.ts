@@ -27,7 +27,7 @@ const getWorkExp = async (id: number) => {
 // get all WorkExp
 const getAllWorkExp = async () => {
   const allWorkExp = await prisma.workExperince.findMany();
-  if (!allWorkExp) {
+  if (!allWorkExp || allWorkExp.length === 0) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Work experince not found');
   }
 

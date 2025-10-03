@@ -4,6 +4,7 @@ import { sendResonse } from '../../utils/response';
 import { asyncFunc } from '../../utils/asyncFync';
 import { blogService } from './blog.service';
 import { StatusCodes } from 'http-status-codes';
+import { Record } from '@prisma/client/runtime/library';
 
 // Creating a blog
 const createBlog = asyncFunc(
@@ -50,14 +51,19 @@ const GetBlog = asyncFunc(
 // get all blog
 const getAllBlog = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    const newBlog = await blogService.getAllBlog();
-    console.log('newBlog', newBlog);
-
+    const query = req.query
+    const allBlog = await blogService.getAllBlog(query as Record<string, string>);
     sendResonse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: 'Blogs successfully retrived',
-      data: newBlog,
+      data: allBlog.data,
+      meta:{
+        page:allBlog.meta.page,
+        total:allBlog.meta.totalBlog,
+        limit:allBlog.meta.limit,
+        totalpage:allBlog.meta.totalPage
+      }
     });
   },
 );
@@ -80,12 +86,12 @@ const deleteBlog = asyncFunc(
 // stats of  blogs
 const statsBlog = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    const newBlog = await blogService.createBlog(req.body);
+    const stats = await blogService.getBlogStats();
     sendResonse(res, {
       success: true,
       statusCode: StatusCodes.CREATED,
-      message: 'Blog successfully created',
-      data: newBlog,
+      message: 'Successfully retrived blogs stats',
+      data: stats,
     });
   },
 );
