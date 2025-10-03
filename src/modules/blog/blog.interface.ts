@@ -9,7 +9,7 @@ export interface IBlog {
   publishedDate:Date;
   slug: string;
   authorId: number;
-  author: IUser;
+  author?: IUser;
   tags: string[];
   createdAt: Date;
   updatedAt: Date;
