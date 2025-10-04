@@ -49,7 +49,7 @@ model Blog {
   published     Boolean  @default(false)
   publishedDate DateTime @default(now())
   slug          String   @unique
-  views         Int
+  views         Int      @default(0)
   authorId      Int
   author        User     @relation(fields: [authorId], references: [id])
   tags          String[]

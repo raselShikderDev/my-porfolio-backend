@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import { prisma } from '../../configs/db';
 import AppError from '../../errorHelper/error';
 
+
 const createBlog = async (payload: any) => {
   const existedBlog = await prisma.blog.findUnique({
     where: {
@@ -64,6 +65,7 @@ const getBlog = async (slug: string) => {
   }
   return blog;
 };
+
 // delete a Blog
 const deleteBlog = async (slug: string) => {
   const blog = await prisma.blog.delete({
@@ -168,10 +170,62 @@ const getAllBlog = async ({
 };
 
 const getBlogStats = async()=>{
-    // const stats = await prisma.blog.aggregate({
-    //     where
-    // })
-    return
+     return await prisma.$transaction(async (txrb) => {
+        const aggregates = await txrb.blog.aggregate({
+            _count: true,
+            _sum: { views: true },
+            _avg: { views: true },
+            _max: { views: true },
+            _min: { views: true },
+        })
+
+        const featuredCount = await txrb.blog.count({
+            where: {
+                published: true
+            }
+        });
+
+        const topFeatured = await txrb.blog.findFirst({
+            where: { published: true },
+            orderBy: { views: "desc" }
+        })
+
+        const lastWeek = new Date();
+        lastWeek.setDate(lastWeek.getDate() - 7)
+        const lastMonth = new Date();
+        lastWeek.setDate(lastWeek.getDate() - 30)
+
+        const lastWeekPostCount = await txrb.blog.count({
+            where: {
+                createdAt: {
+                    gte: lastWeek
+                }
+            }
+        })
+        const lastMonthPostCount = await txrb.blog.count({
+            where: {
+                createdAt: {
+                    gte: lastMonth
+                }
+            }
+        })
+
+        return {
+            stats: {
+                totalBlog: aggregates._count ?? 0,
+                totalViews: aggregates._sum.views ?? 0,
+                avgViews: aggregates._avg.views ?? 0,
+                minViews: aggregates._min.views ?? 0,
+                maxViews: aggregates._max.views ?? 0
+            },
+            featured: {
+                count: featuredCount,
+                topPost: topFeatured,
+            },
+            lastWeekPostCount,
+            lastMonthPostCount
+        };
+    })
 }
 
 export const blogService = {

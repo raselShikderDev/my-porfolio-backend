@@ -16,11 +16,4 @@ export interface IBlog {
   updatedAt: Date;
 }
 
-export interface IQuery {
-  page?: number;
-  limit?: number;
-  search?: string;
-  published?: boolean;
-  orderFeild:string;
-  orderBy? : "asc" | "desc";
-}
+

@@ -89,7 +89,7 @@ const statsBlog = asyncFunc(
     const stats = await blogService.getBlogStats();
     sendResonse(res, {
       success: true,
-      statusCode: StatusCodes.CREATED,
+      statusCode: StatusCodes.OK,
       message: 'Successfully retrived blogs stats',
       data: stats,
     });
