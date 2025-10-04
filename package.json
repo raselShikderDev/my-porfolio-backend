@@ -1,13 +1,13 @@
 {
   "name": "myportfolio-backend",
-  "module": "index.ts",
   "type": "module",
   "private": true,
+  "main": "dist/server.js",
   "scripts": {
     "test": "echo \"No tests configured yet\"",
-    "dev": "bun --watch src/server.ts",
-    "build": "tsc",
-    "start": "bun run dist/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only ./src/server.ts",
+    "build": "bun install && tsc",
+    "start": "bun dist/server.js",
     "lint": "eslint 'src/**/*.{ts,tsx,js}'",
     "lint:fix": "eslint 'src/**/*.{ts,js}' --fix"
   },

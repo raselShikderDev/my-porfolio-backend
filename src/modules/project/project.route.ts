@@ -4,6 +4,7 @@ import { ProjectCreateSchema, ProjectUpdateSchema } from './project.schema';
 import authCheck from '../../middlewares/authCheck';
 import { Role } from '../users/user.interface';
 import { projectController } from './project.controller';
+import { multerUpload } from '../../configs/multerConfig';
 
 const router = Router();
 
@@ -11,6 +12,7 @@ const router = Router();
 // Creating a project
 router.post(
   "/create",
+   multerUpload.single("file"),
   authCheck(...Object.values(Role)),
   requestValidator(ProjectCreateSchema),
   projectController.createProject,
@@ -20,6 +22,7 @@ router.post(
 // edit a project
 router.patch(
   "/edit/:id",
+   multerUpload.single("file"),
   authCheck(...Object.values(Role)),
   requestValidator(ProjectUpdateSchema),
   projectController.editProject,
