@@ -27,12 +27,11 @@ router.post(
 // get all Blog
 router.get(
   '/all',
-  authCheck(...Object.values(Role)),
   blogController.getAllBlog,
 );
 
 // Get a blog
-router.get('/:slug', authCheck(...Object.values(Role)), blogController.GetBlog);
+router.get('/:slug', blogController.GetBlog);
 
 // Publish a post
 router.patch(

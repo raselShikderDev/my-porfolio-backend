@@ -30,7 +30,6 @@ router.patch(
 // get all Work Experince
 router.get(
   "/all",
-  authCheck(...Object.values(Role)),
   workExpController.getAllWorkExp,
 );
 

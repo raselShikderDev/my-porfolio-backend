@@ -32,7 +32,6 @@ router.patch(
 // get all project
 router.get(
   "/all",
-  authCheck(...Object.values(Role)),
   projectController.getAllProject,
 );
 
