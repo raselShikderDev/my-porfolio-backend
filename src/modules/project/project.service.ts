@@ -27,7 +27,7 @@ const getProject = async (id: number) => {
 // get all project
 const getAllProject = async () => {
   const allProject = await prisma.project.findMany();
-  if (!allProject) {
+  if (!allProject || allProject.length === 0) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Projects not found');
   }
 

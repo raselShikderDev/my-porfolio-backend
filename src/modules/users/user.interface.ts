@@ -1,4 +1,3 @@
-import { IsActive } from "@prisma/client";
 import { IBlog } from "../blog/blog.interface";
 import { IProject } from "../project/project.interface";
 import { IWorkExperince } from "../workExperience/workExp.interface";
@@ -23,7 +22,7 @@ export interface IUser {
   skills: string[];
   address: string;
   phone: string;
-  isActive: IsActive;
+  isActive: isActive;
   role: Role;
   isVerified: boolean;
   github: string;

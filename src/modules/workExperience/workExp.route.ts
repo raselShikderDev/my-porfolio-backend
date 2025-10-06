@@ -2,6 +2,7 @@ import { Router } from 'express';
 import authCheck from '../../middlewares/authCheck';
 import { Role } from '../users/user.interface';
 import { workExpController } from './workExp.controller';
+import { multerUpload } from '../../configs/multerConfig';
 
 const router = Router();
 
@@ -9,6 +10,7 @@ const router = Router();
 // Creating a Work Experince
 router.post(
   "/create",
+   multerUpload.single("file"),
   authCheck(...Object.values(Role)),
   // requestValidator(WorkExperienceCreateSchema),
   workExpController.createWorkExp,
@@ -18,6 +20,7 @@ router.post(
 // edit a Work Experince
 router.patch(
   "/edit/:id",
+   multerUpload.single("file"),
   authCheck(...Object.values(Role)),
   // requestValidator(WorkExperienceUpdateSchema),
   workExpController.editWorkExp,
@@ -27,7 +30,6 @@ router.patch(
 // get all Work Experince
 router.get(
   "/all",
-  authCheck(...Object.values(Role)),
   workExpController.getAllWorkExp,
 );
 
