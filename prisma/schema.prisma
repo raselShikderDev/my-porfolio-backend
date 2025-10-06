@@ -48,7 +48,8 @@ model Blog {
   images        String[]
   published     Boolean  @default(false)
   publishedDate DateTime @default(now())
-  slug          String
+  slug          String   @unique
+  views         Int      @default(0)
   authorId      Int
   author        User     @relation(fields: [authorId], references: [id])
   tags          String[]

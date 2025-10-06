@@ -1,21 +1,18 @@
 {
   "name": "myportfolio-backend",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"No tests configured yet\"",
     "dev": "bun --watch src/server.ts",
     "build": "tsc",
     "start": "bun run dist/server.js",
     "lint": "eslint 'src/**/*.{ts,tsx,js}'",
-    "lint:fix": "eslint 'src/**/*.{ts,js}' --fix"
+    "lint:fix": "eslint 'src/**/*.{ts,js}' --fix",
+    "postinstall": "prisma generate"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/dotenv": "^8.2.3",
-    "@types/express": "^5.0.3",
-    "ts-node-dev": "^2.0.0"
+    "@types/express": "^5.0.3"
   },
   "peerDependencies": {
     "typescript": "^5.9.2"

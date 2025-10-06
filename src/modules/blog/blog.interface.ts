@@ -1,4 +1,4 @@
-import { IUser } from "../users/user.interface";
+import { IUser } from '../users/user.interface';
 
 export interface IBlog {
   id: number;
@@ -6,11 +6,14 @@ export interface IBlog {
   content?: string;
   images: string[];
   published: boolean;
-  publishedDate:Date;
+  publishedDate: Date;
   slug: string;
+  views: number;
   authorId: number;
-  author: IUser;
+  author?: IUser;
   tags: string[];
   createdAt: Date;
   updatedAt: Date;
 }
+
+
