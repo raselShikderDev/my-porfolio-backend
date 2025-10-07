@@ -37,7 +37,6 @@ const updateBlog = asyncFunc(
 // get a blog
 const GetBlog = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Got request for one blog")
     const newBlog = await blogService.getBlog(req.params.slug);
     sendResonse(res, {
       success: true,
@@ -54,7 +53,6 @@ const getAllBlog = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
     const query = req.query
     const allBlog = await blogService.getAllBlog(query as Record<string, string>);
-    console.log("Got request in all blog");
     
     sendResonse(res, {
       success: true,

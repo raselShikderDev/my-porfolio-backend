@@ -172,7 +172,6 @@ const getAllBlog = async ({
       [orderFeild]: orderBy ? orderBy : 'desc',
     },
   });
-  console.log(blogs);
   
   if (!blogs || blogs.length === 0) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Blogs not found');
