@@ -55,7 +55,25 @@ const updateBlog = async (slug: string, payload: any) => {
 
 // Get a Blog
 const getBlog = async (slug: string) => {
-  const blog = await prisma.blog.findUnique({
+
+  return await prisma.$transaction(async(tx)=>{
+
+    const viewIncrease = await tx.blog.update({
+      where:{
+        slug:slug
+      },
+      data:{
+        views:{
+          increment: 1
+        }
+      }
+     })
+
+     if (!viewIncrease) {
+      throw new AppError(StatusCodes.NOT_FOUND, 'Increasing view count is failed')
+     }
+
+     const blog = await tx.blog.findUnique({
     where: {
       slug: slug,
     },
@@ -64,6 +82,8 @@ const getBlog = async (slug: string) => {
     throw new AppError(StatusCodes.NOT_FOUND, 'Blog not found');
   }
   return blog;
+  })
+ 
 };
 
 // delete a Blog
