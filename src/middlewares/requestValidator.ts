@@ -8,16 +8,26 @@ export const requestValidator =
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (envVars.NODE_ENV === 'development') {
-        console.log('Validating data of received request');
+        console.log(
+          '[Very first] Validating data of received request',
+          `${req.body.data ? req.body.data : req.body}`,
+        );
       }
 
       if (req.body.data) {
         // req.body = JSON.parse(req.body.data);
         req.body = req.body.data;
+        console.log(
+          '[req.body.data] Data from received request is validated',
+          req.body.data,
+        );
       }
       await zodSchema.parseAsync(req.body);
       if (envVars.NODE_ENV === 'development') {
-        console.log('Data from received request is validated');
+        console.log(
+          '[req.body] Data from received request is validated',
+          req.body,
+        );
       }
       next();
     } catch (error) {

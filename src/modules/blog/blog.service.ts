@@ -116,7 +116,7 @@ const unPublishBlog = async (slug: string) => {
 // Get all Blog
 const getAllBlog = async ({
   page = 1,
-  limit = 1,
+  limit = 10,
   search,
   published,
   orderBy,
@@ -152,6 +152,8 @@ const getAllBlog = async ({
       [orderFeild]: orderBy ? orderBy : 'desc',
     },
   });
+  console.log(blogs);
+  
   if (!blogs || blogs.length === 0) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Blogs not found');
   }
