@@ -8,8 +8,6 @@ import { multerUpload } from '../../configs/multerConfig';
 
 const router = express.Router();
 
-// eslint-disable-next-line no-console
-console.log("✅ Blog routes registered");
 
 // get all Blog
 router.get(

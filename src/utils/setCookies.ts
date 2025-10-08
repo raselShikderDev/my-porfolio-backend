@@ -7,14 +7,14 @@ export const setAuthCookies = async (res: Response, tokens: ITokens) => {
     res.cookie("accessToken", tokens.accessToken, {
       httpOnly: true,
       sameSite: "none",
-      secure: true,
+      secure: false,
     });
   }
   if (tokens.refreshToken) {
     res.cookie("refreshToken", tokens.refreshToken, {
       httpOnly: true,
       sameSite: "none",
-      secure: true,
+      secure: false,
     });
   }
 };
