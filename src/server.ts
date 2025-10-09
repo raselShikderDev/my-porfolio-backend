@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
 import http, { Server } from "http";
-import { envVars } from "./configs/envVars.js";
-import app from "./app.js";
+import { envVars } from "./configs/envVars.ts";
+import app from "./app.ts";
 import { prisma } from "./configs/db.js";
-import { seedOwner } from "./utils/seedOwner.js";
+import { seedOwner } from "./utils/seedOwner.ts";
 
 let server: Server | null = null;
 

@@ -24,7 +24,7 @@ model User {
   name          String
   email         String          @unique
   password      String
-  avater        String?
+  avater        String          @default("https://cdn-icons-png.flaticon.com/512/9385/9385289.png")
   skills        String[]
   address       String          @db.VarChar(150)
   phone         String
@@ -45,7 +45,7 @@ model Blog {
   id            Int      @id @default(autoincrement())
   title         String   @db.VarChar(255)
   content       String?
-  images        String[]
+  images        String[] @default(["https://placehold.co/800x450/eee/555?font=playfair-display&text=No+Thumbnail+Yet"])
   published     Boolean  @default(false)
   publishedDate DateTime @default(now())
   slug          String   @unique

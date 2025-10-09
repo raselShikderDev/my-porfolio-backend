@@ -53,6 +53,7 @@ const getAllBlog = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
     const query = req.query
     const allBlog = await blogService.getAllBlog(query as Record<string, string>);
+    
     sendResonse(res, {
       success: true,
       statusCode: StatusCodes.OK,
@@ -86,6 +87,8 @@ const deleteBlog = asyncFunc(
 // stats of  blogs
 const statsBlog = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
+    console.log("Receive request for stats");
+    
     const stats = await blogService.getBlogStats();
     sendResonse(res, {
       success: true,
