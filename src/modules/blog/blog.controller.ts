@@ -87,6 +87,8 @@ const deleteBlog = asyncFunc(
 // stats of  blogs
 const statsBlog = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
+    console.log("Receive request for stats");
+    
     const stats = await blogService.getBlogStats();
     sendResonse(res, {
       success: true,

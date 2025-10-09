@@ -34,13 +34,13 @@ const ownerLogOut = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
     res.clearCookie('accessToken', {
       httpOnly: true,
+      secure: true,
       sameSite: 'none',
-      secure: false,
     });
     res.clearCookie('refreshToken', {
       httpOnly: true,
+      secure: true,
       sameSite: 'none',
-      secure: false,
     });
 
     sendResonse(res, {
@@ -52,15 +52,15 @@ const ownerLogOut = asyncFunc(
   },
 );
 
-
-
 // Generate accesstoken by refresh Token
 const generateNewAccessToken = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
     const refreshToken = req.cookies.refreshToken || req.headers.authorization;
     const accessToken = req.cookies.accessToken || req.headers.authorization;
-    const ownerCredentials =
-      await authServices.generateNewAccessToken(accessToken, refreshToken);
+    const ownerCredentials = await authServices.generateNewAccessToken(
+      accessToken,
+      refreshToken,
+    );
     if (!ownerCredentials.accessToken) {
       throw new AppError(
         StatusCodes.BAD_GATEWAY,
