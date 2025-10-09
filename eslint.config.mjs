@@ -1,3 +1,5 @@
+// @ts-check
+
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 
@@ -8,8 +10,8 @@ export default tseslint.config(
   tseslint.configs.stylistic,
   {
     rules: {
-      "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": "error",
+      // "no-unused-vars": "off",
+      // "@typescript-eslint/no-unused-vars": "error",
       "no-console":"warn"
     },
   }

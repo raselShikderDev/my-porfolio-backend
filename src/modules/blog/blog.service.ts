@@ -3,7 +3,6 @@ import { StatusCodes } from 'http-status-codes';
 import { prisma } from '../../configs/db';
 import AppError from '../../errorHelper/error';
 
-
 const createBlog = async (payload: any) => {
   const existedBlog = await prisma.blog.findUnique({
     where: {
@@ -55,15 +54,35 @@ const updateBlog = async (slug: string, payload: any) => {
 
 // Get a Blog
 const getBlog = async (slug: string) => {
-  const blog = await prisma.blog.findUnique({
-    where: {
-      slug: slug,
-    },
+  return await prisma.$transaction(async (tx) => {
+    const viewIncrease = await tx.blog.update({
+      where: {
+        slug: slug,
+      },
+      data: {
+        views: {
+          increment: 1,
+        },
+      },
+    });
+
+    if (!viewIncrease) {
+      throw new AppError(
+        StatusCodes.NOT_FOUND,
+        'Increasing view count is failed',
+      );
+    }
+
+    const blog = await tx.blog.findUnique({
+      where: {
+        slug: slug,
+      },
+    });
+    if (!blog) {
+      throw new AppError(StatusCodes.NOT_FOUND, 'Blog not found');
+    }
+    return blog;
   });
-  if (!blog) {
-    throw new AppError(StatusCodes.NOT_FOUND, 'Blog not found');
-  }
-  return blog;
 };
 
 // delete a Blog
@@ -116,7 +135,7 @@ const unPublishBlog = async (slug: string) => {
 // Get all Blog
 const getAllBlog = async ({
   page = 1,
-  limit = 1,
+  limit = 10,
   search,
   published,
   orderBy,
@@ -152,11 +171,12 @@ const getAllBlog = async ({
       [orderFeild]: orderBy ? orderBy : 'desc',
     },
   });
+
   if (!blogs || blogs.length === 0) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Blogs not found');
   }
 
-  const totalBlogCount = await prisma.blog.count({ where});
+  const totalBlogCount = await prisma.blog.count({ where });
 
   return {
     data: blogs,
@@ -164,69 +184,64 @@ const getAllBlog = async ({
       page,
       limit,
       totalBlog: totalBlogCount,
-      totalPage: Math.ceil(totalBlogCount / limit)
+      totalPage: Math.ceil(totalBlogCount / limit),
     },
   };
 };
 
-const getBlogStats = async()=>{
-     return await prisma.$transaction(async (txrb) => {
-        const aggregates = await txrb.blog.aggregate({
-            _count: true,
-            _sum: { views: true },
-            _avg: { views: true },
-            _max: { views: true },
-            _min: { views: true },
-        })
+const getBlogStats = async () => {
+  return await prisma.$transaction(async (txrb) => {
+    const aggregates = await txrb.blog.aggregate({
+      _count: true,
+      _sum: { views: true },
+      _avg: { views: true },
+      _max: { views: true },
+      _min: { views: true },
+    });
 
-        const featuredCount = await txrb.blog.count({
-            where: {
-                published: true
-            }
-        });
+    const featuredCount = await txrb.blog.count({
+      where: { published: true },
+      orderBy: { views: 'desc' },
+      take: 10,
+    });
 
-        const topFeatured = await txrb.blog.findFirst({
-            where: { published: true },
-            orderBy: { views: "desc" }
-        })
+    const lastWeek = new Date();
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    const lastMonth = new Date();
+    lastWeek.setDate(lastWeek.getDate() - 30);
 
-        const lastWeek = new Date();
-        lastWeek.setDate(lastWeek.getDate() - 7)
-        const lastMonth = new Date();
-        lastWeek.setDate(lastWeek.getDate() - 30)
+    const lastWeekPostCount = await txrb.blog.count({
+      where: {
+        createdAt: {
+          gte: lastWeek,
+        },
+      },
+    });
+    const lastMonthPostCount = await txrb.blog.count({
+      where: {
+        createdAt: {
+          gte: lastMonth,
+        },
+      },
+    });
 
-        const lastWeekPostCount = await txrb.blog.count({
-            where: {
-                createdAt: {
-                    gte: lastWeek
-                }
-            }
-        })
-        const lastMonthPostCount = await txrb.blog.count({
-            where: {
-                createdAt: {
-                    gte: lastMonth
-                }
-            }
-        })
+    const totalProject = await txrb.project.count();
+    const totalExperience = await txrb.workExperince.count();
 
-        return {
-            stats: {
-                totalBlog: aggregates._count ?? 0,
-                totalViews: aggregates._sum.views ?? 0,
-                avgViews: aggregates._avg.views ?? 0,
-                minViews: aggregates._min.views ?? 0,
-                maxViews: aggregates._max.views ?? 0
-            },
-            featured: {
-                count: featuredCount,
-                topPost: topFeatured,
-            },
-            lastWeekPostCount,
-            lastMonthPostCount
-        };
-    })
-}
+    return {
+      stats: {
+        totalBlog: aggregates._count ?? 0,
+        totalViews: aggregates._sum.views ?? 0,
+        avgViews: Math.ceil(aggregates._avg.views as number) ?? 0,
+        totalExperience: totalExperience ?? 0,
+        totalProject: totalProject ?? 0,
+      },
+      featuredCount,
+      lastWeekPostCount,
+      lastMonthPostCount,
+    };
+  });
+};
 
 export const blogService = {
   createBlog,

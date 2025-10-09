@@ -10,7 +10,10 @@ import { projectServices } from './project.service';
 // Creating a project
 const createProject = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
+    console.log(`[In Controller] receive request with: ${req.body}`);
+    
     const newProject = await projectServices.createProject(req.body);
+    
     sendResonse(res, {
       success: true,
       statusCode: StatusCodes.CREATED,
@@ -74,6 +77,8 @@ const getAllProject = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
     // console.log("req.body in controller: ", req.body);
     const projects = await projectServices.getAllProject();
+        console.log(`Resonse: ${projects}`);
+
     sendResonse(res, {
       success: true,
       statusCode: StatusCodes.OK,

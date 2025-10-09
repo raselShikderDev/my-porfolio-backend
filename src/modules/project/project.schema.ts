@@ -11,7 +11,8 @@ export const ProjectCreateSchema = z.object({
     .min(10, 'Project description must be at least 10 characters long'),
   image: z
     .url('Project image must be a valid URL')
-    .min(1, 'Project image URL is required'),
+    .min(1, 'Project image URL is required')
+    .optional(),
   techStack: z
     .array(z.string().min(1, 'Tech stack item cannot be empty'))
     .min(1, 'At least one tech stack item is required'),

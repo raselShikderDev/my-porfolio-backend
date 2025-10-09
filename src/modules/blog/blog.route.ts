@@ -8,6 +8,13 @@ import { multerUpload } from '../../configs/multerConfig';
 
 const router = express.Router();
 
+
+// get all Blog
+router.get(
+  '/all',
+  blogController.getAllBlog,
+);
+
 //Get stats of blog
 router.get(
   '/stats',
@@ -24,11 +31,7 @@ router.post(
   blogController.createBlog,
 );
 
-// get all Blog
-router.get(
-  '/all',
-  blogController.getAllBlog,
-);
+
 
 // Get a blog
 router.get('/:slug', blogController.GetBlog);
