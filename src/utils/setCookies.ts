@@ -9,14 +9,14 @@ export const setAuthCookies = async (res: Response, tokens: ITokens) => {
   if (tokens.accessToken) {
     res.cookie('accessToken', tokens.accessToken, {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: 'none',
     });
   }
   if (tokens.refreshToken) {
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: 'none',
     });
   }
