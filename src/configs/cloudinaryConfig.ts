@@ -16,6 +16,8 @@ export const uploadBufferCloudinary = async (
   fileName: string
 ): Promise<UploadApiResponse> => {
   return new Promise((resolve, reject) => {
+    console.log("in cloudinary buffer: ", buffer);
+    
     try {
       const public_id = `pdf/${fileName}-${Date.now()}`;
       const bufferStream = new stream.PassThrough();
@@ -36,6 +38,23 @@ export const uploadBufferCloudinary = async (
           }
         )
         .end(buffer);
+        const uploader = cloudinary.uploader
+        .upload_stream(
+          {
+            resource_type: "auto",
+            public_id,
+            folder: "pdf",
+          },
+          (err, result) => {
+            if (err) {
+              return reject(err);
+            }
+            resolve(result as UploadApiResponse);
+          }
+        )
+        .end(buffer);
+        console.log("uploader", uploader);
+        
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new AppError(StatusCodes.INTERNAL_SERVER_ERROR, `Faild to upload file:${error.message}`);

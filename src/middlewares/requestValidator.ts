@@ -8,6 +8,8 @@ export const requestValidator =
   async (req: Request, res: Response, next: NextFunction) => {
     if (envVars.NODE_ENV === 'Development')
       console.log(`in validateReq - req.body: `, req.body);
+console.log('req.body.data', req.body.data);
+console.log("req.file", req.file);
 
     if (req.body.data) {
       if (envVars.NODE_ENV === 'Development')
