@@ -1,9 +1,25 @@
+-- CreateEnum
+CREATE TYPE "public"."Role" AS ENUM ('MANAGER', 'OWNER');
+
+-- CreateEnum
+CREATE TYPE "public"."IsActive" AS ENUM ('ACTIVE', 'INACTIVE', 'BLOCKED');
+
 -- CreateTable
 CREATE TABLE "public"."User" (
     "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
-    "avater" TEXT,
+    "avater" TEXT NOT NULL DEFAULT 'https://cdn-icons-png.flaticon.com/512/9385/9385289.png',
+    "skills" TEXT[],
+    "address" VARCHAR(150) NOT NULL,
+    "phone" TEXT NOT NULL,
+    "isActive" "public"."IsActive" NOT NULL DEFAULT 'ACTIVE',
+    "role" "public"."Role" NOT NULL DEFAULT 'OWNER',
+    "isVerified" BOOLEAN NOT NULL DEFAULT true,
+    "github" TEXT NOT NULL,
+    "linkedin" TEXT NOT NULL,
+    "twitter" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -15,7 +31,11 @@ CREATE TABLE "public"."Blog" (
     "id" SERIAL NOT NULL,
     "title" VARCHAR(255) NOT NULL,
     "content" TEXT,
+    "images" TEXT[] DEFAULT ARRAY['https://placehold.co/800x450/eee/555?font=playfair-display&text=No+Thumbnail+Yet']::TEXT[],
     "published" BOOLEAN NOT NULL DEFAULT false,
+    "publishedDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "slug" TEXT NOT NULL,
+    "views" INTEGER NOT NULL DEFAULT 0,
     "authorId" INTEGER NOT NULL,
     "tags" TEXT[],
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -31,24 +51,13 @@ CREATE TABLE "public"."Project" (
     "description" VARCHAR(500) NOT NULL,
     "image" TEXT NOT NULL,
     "techStack" TEXT[],
-    "url" TEXT NOT NULL,
+    "liveUrl" TEXT NOT NULL,
+    "githubUrl" TEXT NOT NULL,
     "userId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Project_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."AboutMe" (
-    "id" SERIAL NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
-    "skills" TEXT[],
-    "address" VARCHAR(150) NOT NULL,
-    "phone" INTEGER NOT NULL,
-
-    CONSTRAINT "AboutMe_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -61,6 +70,12 @@ CREATE TABLE "public"."WorkExperince" (
     "startDate" TIMESTAMP(3) NOT NULL,
     "endDate" TIMESTAMP(3) NOT NULL
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "public"."User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Blog_slug_key" ON "public"."Blog"("slug");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "WorkExperince_id_key" ON "public"."WorkExperince"("id");
