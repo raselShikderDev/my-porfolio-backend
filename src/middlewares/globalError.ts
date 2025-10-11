@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable @typescript-eslint/no-inferrable-types */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -14,28 +13,30 @@ const globalError = async (
   res: Response,
   next: NextFunction
 ) => {
-
   let message: string = "Something went wrong!";
   let statusCode: number = 500;
+  let errorDetails: any = null;
 
-  // delete singel image from cludianry - (req.file)
-  if(req.file){
-    await deleteImageFromCloudinary(req.file.path)
+  // Clean up uploaded single image if request failed
+  if (req.file) {
+    await deleteImageFromCloudinary(req.file.path);
   }
 
-  // deleting multiple image from cloudinary - (req.files)
+  // Clean up multiple uploaded images if request failed
   if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-    const imagesUrl = (req.files as Express.Multer.File[]).map((file)=> file.path)
-    await Promise.all(imagesUrl.map((url)=> deleteImageFromCloudinary(url)))
+    const imagesUrl = (req.files as Express.Multer.File[]).map(
+      (file) => file.path
+    );
+    await Promise.all(imagesUrl.map((url) => deleteImageFromCloudinary(url)));
   }
 
-  // 1. Known DB errors
+  // Prisma known request errors
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === "P2002") {
       statusCode = 409;
       message = `Unique constraint failed on the field: ${err.meta?.target}`;
     } else if (err.code === "P2025") {
-      statusCode = 409;
+      statusCode = 404;
       message = "Record not found";
     } else {
       statusCode = 400;
@@ -43,42 +44,59 @@ const globalError = async (
     }
   }
 
-  // 2. Validation errors
+  // Prisma validation errors
   else if (err instanceof Prisma.PrismaClientValidationError) {
-    (statusCode = 400), (message = "Validation error: " + err.message);
+    statusCode = 400;
+    message = "Validation error: " + err.message;
   }
 
-  // 3. Unknown request errors
+  // Prisma unknown request errors
   else if (err instanceof Prisma.PrismaClientUnknownRequestError) {
-    (statusCode = 500), (message = "Unknown database error");
+    statusCode = 500;
+    message = "Unknown database error";
   }
 
-  // 4. Initialization errors
+  // Prisma initialization errors
   else if (err instanceof Prisma.PrismaClientInitializationError) {
-    (statusCode = 500), (message = "Failed to initialize database connection");
+    statusCode = 500;
+    message = "Failed to initialize database connection";
   }
 
-  // 5. Rust panic
+  // Prisma Rust panic
   else if (err instanceof Prisma.PrismaClientRustPanicError) {
-    (statusCode = 500), (message = "Database engine crashed unexpectedly");
+    statusCode = 500;
+    message = "Database engine crashed unexpectedly";
   }
 
-  // Zod Error
+  // Zod validation errors
   else if (err.name === "ZodError") {
     statusCode = 400;
-    message = `Zod Error`;
-  } else if (err instanceof AppError) {
+    message = "Zod validation failed";
+    errorDetails = err.errors?.map((issue: any) => ({
+      path: issue.path.join("."),
+      message: issue.message,
+      expected: issue.expected,
+      received: issue.received,
+    }));
+  }
+
+  // Custom AppError
+  else if (err instanceof AppError) {
     statusCode = err.statusCode;
     message = err.message;
-  } else if (err instanceof Error) {
-    statusCode = 501;
+  }
+
+  // Generic error
+  else if (err instanceof Error) {
+    statusCode = 500;
     message = err.message;
   }
 
   res.status(statusCode).json({
     success: false,
     message,
-    err: envVars.NODE_ENV === "development" ? err.stack : null,
+    errors: errorDetails || null,
+    err: envVars.NODE_ENV === "development" ? err : null,
     stack: envVars.NODE_ENV === "development" ? err.stack : null,
   });
 };

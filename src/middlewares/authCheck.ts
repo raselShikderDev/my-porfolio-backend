@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { NextFunction, Request, Response } from 'express';
 import { envVars } from '../configs/envVars';
 import { verifyJwtToken } from '../utils/jwt';

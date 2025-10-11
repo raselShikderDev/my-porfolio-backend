@@ -17,8 +17,6 @@ const storage = new CloudinaryStorage({
 
         const fileExtension = file.originalname.split(".").pop()
         const uniqeFileName = Math.random().toString(36).substring(2) + "-" + Date.now() + "-" + fileName + "-" + "." + fileExtension
-              console.log("In multer config of uniqeFileName: ", uniqeFileName);
-              console.log("In multer config of fileName: ", fileName);
 
         return uniqeFileName
     },

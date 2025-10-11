@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
 import { StatusCodes } from "http-status-codes";
 import stream from "stream";
@@ -72,7 +73,6 @@ export const deleteImageFromCloudinary = async (url: string) => {
     if (match && match[1]) {
       const public_id = match[1];
       await cloudinary.uploader.destroy(public_id);
-      // eslint-disable-next-line no-console
       console.log("File ", +public_id + " Removed from the cloudinary");
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
