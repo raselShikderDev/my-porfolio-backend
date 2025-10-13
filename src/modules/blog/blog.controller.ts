@@ -19,7 +19,6 @@ const createBlog = asyncFunc(
   },
 );
 
-
 // Upadting a blog
 const updateBlog = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -32,7 +31,6 @@ const updateBlog = asyncFunc(
     });
   },
 );
-
 
 // get a blog
 const GetBlog = asyncFunc(
@@ -47,28 +45,28 @@ const GetBlog = asyncFunc(
   },
 );
 
-
 // get all blog
 const getAllBlog = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    const query = req.query
-    const allBlog = await blogService.getAllBlog(query as Record<string, string>);
-    
+    const query = req.query;
+    const allBlog = await blogService.getAllBlog(
+      query as Record<string, string>,
+    );
+
     sendResonse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: 'Blogs successfully retrived',
       data: allBlog.data,
-      meta:{
-        page:allBlog.meta.page,
-        total:allBlog.meta.totalBlog,
-        limit:allBlog.meta.limit,
-        totalpage:allBlog.meta.totalPage
-      }
+      meta: {
+        page: allBlog.meta.page,
+        total: allBlog.meta.totalBlog,
+        limit: allBlog.meta.limit,
+        totalpage: allBlog.meta.totalPage,
+      },
     });
   },
 );
-
 
 // delete a blog
 const deleteBlog = asyncFunc(
@@ -83,12 +81,11 @@ const deleteBlog = asyncFunc(
   },
 );
 
-
 // stats of  blogs
 const statsBlog = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Receive request for stats");
-    
+    console.log('Receive request for stats');
+
     const stats = await blogService.getBlogStats();
     sendResonse(res, {
       success: true,
@@ -98,7 +95,6 @@ const statsBlog = asyncFunc(
     });
   },
 );
-
 
 // publish a blog
 const publishBlog = asyncFunc(
@@ -113,10 +109,11 @@ const publishBlog = asyncFunc(
   },
 );
 
-
 // unpublish a blog
 const unPublishBlog = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
+    console.log('[in controller] req.params.slug: ', req.params.slug);
+
     const blogUnPublished = await blogService.unPublishBlog(req.params.slug);
     sendResonse(res, {
       success: true,
@@ -126,7 +123,6 @@ const unPublishBlog = asyncFunc(
     });
   },
 );
-
 
 export const blogController = {
   createBlog,
