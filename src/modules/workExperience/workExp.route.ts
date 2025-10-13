@@ -3,7 +3,7 @@ import authCheck from '../../middlewares/authCheck';
 import { Role } from '../users/user.interface';
 import { workExpController } from './workExp.controller';
 import { requestValidator } from '../../middlewares/requestValidator';
-import { WorkExperienceCreateSchema, WorkExperienceUpdateSchema } from './workExp.schema';
+import {  WorkExperienceCreateSchema, WorkExperienceUpdateSchema } from './workExp.schema';
 
 const router = Router();
 
