@@ -76,9 +76,7 @@ const generateNewAccessToken = asyncFunc(
       success: true,
       statusCode: StatusCodes.OK,
       message: 'AccessToken successfully generated',
-      data: {
-        accessToken: ownerCredentials.accessToken,
-      },
+      data: ownerCredentials,
     });
   },
 );
