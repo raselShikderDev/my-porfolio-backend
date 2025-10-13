@@ -5,12 +5,11 @@ import { StatusCodes } from 'http-status-codes';
 import { asyncFunc } from '../../utils/asyncFync';
 import { workExpServices } from './workExp.service';
 
-
-
 // Creating a WorkExp
 const createWorkExp = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    
+    console.log('In controller', req.body);
+
     const newWorkExp = await workExpServices.createWorkExp(req.body);
     sendResonse(res, {
       success: true,
@@ -20,7 +19,6 @@ const createWorkExp = asyncFunc(
     });
   },
 );
-
 
 // Edit a WorkExp
 const editWorkExp = asyncFunc(
@@ -37,7 +35,6 @@ const editWorkExp = asyncFunc(
   },
 );
 
-
 // get a WorkExp
 const removeWorkExp = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -52,7 +49,6 @@ const removeWorkExp = asyncFunc(
     });
   },
 );
-
 
 // get a WorkExp
 const getWorkExp = asyncFunc(
@@ -69,7 +65,6 @@ const getWorkExp = asyncFunc(
   },
 );
 
-
 // get all WorkExp
 const getAllWorkExp = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -80,13 +75,12 @@ const getAllWorkExp = asyncFunc(
       statusCode: StatusCodes.OK,
       message: 'Works experinces successfully retrived',
       data: workExp.data,
-      meta:{
-        total:workExp.total
-      }
+      meta: {
+        total: workExp.total,
+      },
     });
   },
 );
-
 
 export const workExpController = {
   createWorkExp,

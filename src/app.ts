@@ -5,17 +5,15 @@ import express, {
 } from 'express';
 import cors from 'cors';
 import compression from 'compression';
-import notFound from './middlewares/notFound.ts';
-import globalError from './middlewares/globalError.ts';
-import { appRoutes } from './routes/mainRouter.ts';
+import notFound from './middlewares/notFound';
+import globalError from './middlewares/globalError';
+import { appRoutes } from './routes/mainRouter';
 import cookieParser from 'cookie-parser';
-import { envVars } from './configs/envVars.ts';
+import { envVars } from './configs/envVars';
 
 const app: Application = express();
 
 console.log(envVars.FRONTEND_URL);
-
-
 
 app.use(compression());
 app.use(express.json());

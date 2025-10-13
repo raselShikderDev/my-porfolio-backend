@@ -10,7 +10,7 @@ import { projectServices } from './project.service';
 // Creating a project
 const createProject = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    console.log(`[In Controller] receive request with: ${req.body}`);
+    console.log("[In Controller] receive request with", req.body);
     
     const newProject = await projectServices.createProject(req.body);
     

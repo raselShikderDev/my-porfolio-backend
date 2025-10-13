@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
 import { StatusCodes } from "http-status-codes";
 import stream from "stream";
@@ -16,6 +17,8 @@ export const uploadBufferCloudinary = async (
   fileName: string
 ): Promise<UploadApiResponse> => {
   return new Promise((resolve, reject) => {
+    console.log("in cloudinary buffer: ", buffer);
+    
     try {
       const public_id = `pdf/${fileName}-${Date.now()}`;
       const bufferStream = new stream.PassThrough();
@@ -36,6 +39,23 @@ export const uploadBufferCloudinary = async (
           }
         )
         .end(buffer);
+        const uploader = cloudinary.uploader
+        .upload_stream(
+          {
+            resource_type: "auto",
+            public_id,
+            folder: "pdf",
+          },
+          (err, result) => {
+            if (err) {
+              return reject(err);
+            }
+            resolve(result as UploadApiResponse);
+          }
+        )
+        .end(buffer);
+        console.log("uploader", uploader);
+        
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       throw new AppError(StatusCodes.INTERNAL_SERVER_ERROR, `Faild to upload file:${error.message}`);
@@ -53,7 +73,6 @@ export const deleteImageFromCloudinary = async (url: string) => {
     if (match && match[1]) {
       const public_id = match[1];
       await cloudinary.uploader.destroy(public_id);
-      // eslint-disable-next-line no-console
       console.log("File ", +public_id + " Removed from the cloudinary");
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -1,17 +1,17 @@
 /* eslint-disable no-console */
-import http, { Server } from "http";
-import { envVars } from "./configs/envVars.ts";
-import app from "./app.ts";
-import { prisma } from "./configs/db.js";
-import { seedOwner } from "./utils/seedOwner.ts";
+import http, { Server } from 'http';
+import { envVars } from './configs/envVars';
+import app from './app';
+import { prisma } from './configs/db.js';
+import { seedOwner } from './utils/seedOwner';
 
 let server: Server | null = null;
 
 async function connectDB() {
   try {
     await prisma.$connect();
-    console.log("Database sucssfully connected");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    console.log('Database sucssfully connected');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.log(`Database connection failed ${error.message}`);
     process.exit(1);

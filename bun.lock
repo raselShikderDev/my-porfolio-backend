@@ -4,16 +4,6 @@
     "": {
       "name": "myportfolio-backend",
       "dependencies": {
-        "@prisma/client": "^6.16.2",
-        "@types/bcrypt": "^6.0.0",
-        "@types/compression": "^1.8.1",
-        "@types/cookie-parser": "^1.4.9",
-        "@types/cors": "^2.8.19",
-        "@types/jsonwebtoken": "^9.0.10",
-        "@types/multer": "^2.0.0",
-        "@types/node": "^24.5.2",
-        "@typescript-eslint/eslint-plugin": "^8.45.0",
-        "@typescript-eslint/parser": "^8.45.0",
         "bcrypt": "^6.0.0",
         "cloudinary": "^2.7.0",
         "compression": "^1.8.1",
@@ -36,15 +26,24 @@
         "multer-storage-cloudinary": "^4.0.0",
         "prettier": "^3.6.2",
         "prisma": "^6.16.2",
-        "react-hook-form": "^7.64.0",
         "tsx": "^4.20.6",
         "typescript-eslint": "^8.45.0",
         "zod": "^4.1.11",
       },
       "devDependencies": {
+        "@prisma/client": "^6.16.2",
+        "@types/bcrypt": "^6.0.0",
         "@types/bun": "latest",
+        "@types/compression": "^1.8.1",
+        "@types/cookie-parser": "^1.4.9",
+        "@types/cors": "^2.8.19",
         "@types/dotenv": "^8.2.3",
         "@types/express": "^5.0.3",
+        "@types/jsonwebtoken": "^9.0.10",
+        "@types/multer": "^2.0.0",
+        "@types/node": "^24.5.2",
+        "@typescript-eslint/eslint-plugin": "^8.45.0",
+        "@typescript-eslint/parser": "^8.45.0",
       },
       "peerDependencies": {
         "typescript": "^5.9.2",
@@ -771,10 +770,6 @@
     "raw-body": ["raw-body@3.0.1", "", { "dependencies": { "bytes": "3.1.2", "http-errors": "2.0.0", "iconv-lite": "0.7.0", "unpipe": "1.0.0" } }, "sha512-9G8cA+tuMS75+6G/TzW8OtLzmBDMo8p1JRxN5AZ+LAp8uxGA8V8GZm4GQ4/N5QNQEnLmg6SS7wyuSmbKepiKqA=="],
 
     "rc9": ["rc9@2.1.2", "", { "dependencies": { "defu": "^6.1.4", "destr": "^2.0.3" } }, "sha512-btXCnMmRIBINM2LDZoEmOogIZU7Qe7zn4BpomSKZ/ykbLObuBdvG+mFq11DL6fjH1DRwHhrlgtYWG96bJiC7Cg=="],
-
-    "react": ["react@19.2.0", "", {}, "sha512-tmbWg6W31tQLeB5cdIBOicJDJRR2KzXsV7uSK9iNfLWQ5bIZfxuPEHp7M8wiHyHnn0DD1i7w3Zmin0FtkrwoCQ=="],
-
-    "react-hook-form": ["react-hook-form@7.64.0", "", { "peerDependencies": { "react": "^16.8.0 || ^17 || ^18 || ^19" } }, "sha512-fnN+vvTiMLnRqKNTVhDysdrUay0kUUAymQnFIznmgDvapjveUWOOPqMNzPg+A+0yf9DuE2h6xzBjN1s+Qx8wcg=="],
 
     "readable-stream": ["readable-stream@3.6.2", "", { "dependencies": { "inherits": "^2.0.3", "string_decoder": "^1.1.1", "util-deprecate": "^1.0.1" } }, "sha512-9u/sniCrY3D5WdsERHzHE4G2YCXqoG5FTHUiCC4SIbr6XcLZBY05ya9EKjYek9O5xOAwjGq+1JdGBAS7Q9ScoA=="],
 

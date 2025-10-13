@@ -5,9 +5,12 @@ import AppError from '../../errorHelper/error';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const createWorkExp = async (payload: any) => {
+  
   const newWorkExp = await prisma.workExperince.create({
     data: payload,
   });
+  console.log("newWorkExp", newWorkExp);
+  
   if (!newWorkExp) {
     throw new AppError(StatusCodes.BAD_GATEWAY, 'Failed to create Work experince');
   }
