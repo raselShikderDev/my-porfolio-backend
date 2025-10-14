@@ -10,7 +10,6 @@ import { projectServices } from './project.service';
 // Creating a project
 const createProject = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    console.log("[In Controller] receive request with", req.body);
     
     const newProject = await projectServices.createProject(req.body);
     
@@ -27,7 +26,6 @@ const createProject = asyncFunc(
 // Edit a project
 const editProject = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    // console.log("req.body in controller: ", req.body);
     const projectId = Number(req.params.id);
     const newProject = await projectServices.editProject(projectId, req.body);
     sendResonse(res, {
@@ -43,7 +41,6 @@ const editProject = asyncFunc(
 // get a project
 const removeProject = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    // console.log("req.body in controller: ", req.body);
     const userId = Number(req.params.id);
     const newProject = await projectServices.removeProject(userId);
     sendResonse(res, {
@@ -59,7 +56,6 @@ const removeProject = asyncFunc(
 // get a project
 const getProject = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    // console.log("req.body in controller: ", req.body);
     const projectId = Number(req.params.id);
     const newProject = await projectServices.getProject(projectId);
     sendResonse(res, {
@@ -75,9 +71,7 @@ const getProject = asyncFunc(
 // get all project
 const getAllProject = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    // console.log("req.body in controller: ", req.body);
     const projects = await projectServices.getAllProject();
-        console.log(`Resonse: ${projects}`);
 
     sendResonse(res, {
       success: true,

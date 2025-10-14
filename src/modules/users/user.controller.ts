@@ -24,7 +24,6 @@ const getMe = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
     const email = req.user.email;
     const owner = await userService.getMe(email);
-    console.log(owner);
     
     sendResonse(res, {
       success: true,

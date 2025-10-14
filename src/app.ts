@@ -13,8 +13,6 @@ import { envVars } from './configs/envVars';
 
 const app: Application = express();
 
-// console.log(envVars.FRONTEND_URL);
-
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
