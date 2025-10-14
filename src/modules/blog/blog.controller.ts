@@ -84,7 +84,6 @@ const deleteBlog = asyncFunc(
 // stats of  blogs
 const statsBlog = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    console.log('Receive request for stats');
 
     const stats = await blogService.getBlogStats();
     sendResonse(res, {
@@ -112,7 +111,6 @@ const publishBlog = asyncFunc(
 // unpublish a blog
 const unPublishBlog = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    console.log('[in controller] req.params.slug: ', req.params.slug);
 
     const blogUnPublished = await blogService.unPublishBlog(req.params.slug);
     sendResonse(res, {

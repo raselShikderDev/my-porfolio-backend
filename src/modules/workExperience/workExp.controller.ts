@@ -8,7 +8,6 @@ import { workExpServices } from './workExp.service';
 // Creating a WorkExp
 const createWorkExp = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    console.log('In controller', req.body);
 
     const newWorkExp = await workExpServices.createWorkExp(req.body);
     sendResonse(res, {
@@ -23,7 +22,6 @@ const createWorkExp = asyncFunc(
 // Edit a WorkExp
 const editWorkExp = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    // console.log("req.body in controller: ", req.body);
     const WorkExpId = Number(req.params.id);
     const newWorkExp = await workExpServices.editWorkExp(WorkExpId, req.body);
     sendResonse(res, {
@@ -38,7 +36,6 @@ const editWorkExp = asyncFunc(
 // get a WorkExp
 const removeWorkExp = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    // console.log("req.body in controller: ", req.body);
     const userId = Number(req.params.id);
     const newWorkExp = await workExpServices.removeWorkExp(userId);
     sendResonse(res, {
@@ -53,7 +50,6 @@ const removeWorkExp = asyncFunc(
 // get a WorkExp
 const getWorkExp = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    // console.log("req.body in controller: ", req.body);
     const WorkExpId = Number(req.params.id);
     const newWorkExp = await workExpServices.getWorkExp(WorkExpId);
     sendResonse(res, {
@@ -68,7 +64,6 @@ const getWorkExp = asyncFunc(
 // get all WorkExp
 const getAllWorkExp = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    // console.log("req.body in controller: ", req.body);
     const workExp = await workExpServices.getAllWorkExp();
     sendResonse(res, {
       success: true,

@@ -13,8 +13,6 @@ import { envVars } from './configs/envVars';
 
 const app: Application = express();
 
-console.log(envVars.FRONTEND_URL);
-
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -22,7 +20,7 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: 'http://localhost:3000',
+    origin: envVars.FRONTEND_URL as string,
     credentials: true,
   }),
 );
