@@ -5,14 +5,15 @@ import AppError from '../../errorHelper/error';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const createWorkExp = async (payload: any) => {
-  
   const newWorkExp = await prisma.workExperince.create({
     data: payload,
   });
-  console.log("newWorkExp", newWorkExp);
-  
+
   if (!newWorkExp) {
-    throw new AppError(StatusCodes.BAD_GATEWAY, 'Failed to create Work experince');
+    throw new AppError(
+      StatusCodes.BAD_GATEWAY,
+      'Failed to create Work experince',
+    );
   }
   return newWorkExp;
 };
@@ -29,16 +30,18 @@ const getWorkExp = async (id: number) => {
 
 // get all WorkExp
 const getAllWorkExp = async () => {
-  const allWorkExp = await prisma.workExperince.findMany();
+  const allWorkExp = await prisma.workExperince.findMany({
+    take: 4,
+  });
   if (!allWorkExp || allWorkExp.length === 0) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Work experince not found');
   }
 
-    const totalWorkExpCount = await prisma.workExperince.count();
+  const totalWorkExpCount = await prisma.workExperince.count();
 
   return {
-    data:allWorkExp,
-    total:totalWorkExpCount
+    data: allWorkExp,
+    total: totalWorkExpCount,
   };
 };
 
@@ -56,14 +59,16 @@ const editWorkExp = async (id: number, payload: Partial<any>) => {
   return updatedWorkExp;
 };
 
-
-const removeWorkExp = async (id:number)=>{
-  const deletedWorkExp = await prisma.workExperince.delete({where:{id}})
+const removeWorkExp = async (id: number) => {
+  const deletedWorkExp = await prisma.workExperince.delete({ where: { id } });
   if (!deletedWorkExp) {
-    throw new AppError(StatusCodes.BAD_REQUEST, "Delation of Work Experince is failed")
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Delation of Work Experince is failed',
+    );
   }
-  return deletedWorkExp
-}
+  return deletedWorkExp;
+};
 
 export const workExpServices = {
   createWorkExp,

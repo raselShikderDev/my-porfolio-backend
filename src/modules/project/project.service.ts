@@ -26,17 +26,18 @@ const getProject = async (id: number) => {
 
 // get all project
 const getAllProject = async () => {
-  const allProject = await prisma.project.findMany();
+  const allProject = await prisma.project.findMany({
+    take: 4,
+  });
   if (!allProject || allProject.length === 0) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Projects not found');
   }
 
-    const allProjectCount = await prisma.project.count();
-
+  const allProjectCount = await prisma.project.count();
 
   return {
-    data:allProject,
-    total:allProjectCount
+    data: allProject,
+    total: allProjectCount,
   };
 };
 
@@ -54,14 +55,16 @@ const editProject = async (id: number, payload: Partial<any>) => {
   return updatedProject;
 };
 
-
-const removeProject = async (id:number)=>{
-  const deletedProject = await prisma.project.delete({where:{id}})
+const removeProject = async (id: number) => {
+  const deletedProject = await prisma.project.delete({ where: { id } });
   if (!deletedProject) {
-    throw new AppError(StatusCodes.BAD_REQUEST, "Delation of project is failed")
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Delation of project is failed',
+    );
   }
-  return deletedProject
-}
+  return deletedProject;
+};
 
 export const projectServices = {
   createProject,
