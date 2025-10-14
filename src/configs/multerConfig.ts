@@ -34,35 +34,3 @@ export const multerUpload = multer({
   },
 });
 
-// // Works from postman of project creation but not from front end
-
-// import multer from "multer";
-// import { CloudinaryStorage } from "multer-storage-cloudinary";
-// import { cloudinaryUpload } from "./cloudinaryConfig";
-
-// const storage = new CloudinaryStorage({
-//   cloudinary: cloudinaryUpload,
-//   params: {
-//     public_id: (req, file) => {
-//       // console.log("req in multer config: ", req);
-//        console.log('File being uploaded:', {
-//       originalname: file.originalname,
-//       mimetype: file.mimetype,
-//       size: file.size
-//     });
-//       const fileName = file.originalname
-//         .toLowerCase()
-//         .replace(/\s+/g, "-")
-//         .replace(/\./g, "-")
-//         // eslint-disable-next-line no-useless-escape
-//         .replace(/[^a-z0-9\-\.]/g, "");
-
-//         const fileExtension = file.originalname.split(".").pop()
-//         const uniqeFileName = Math.random().toString(36).substring(2) + "-" + Date.now() + "-" + fileName + "-" + "." + fileExtension
-
-//         return uniqeFileName
-//     },
-//   },
-// });
-
-// export const multerUpload = multer({storage:storage})
