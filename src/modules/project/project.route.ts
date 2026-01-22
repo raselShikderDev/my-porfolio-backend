@@ -39,7 +39,6 @@ router.get(
 // get a project
 router.get(
   "/:id",
-  authCheck(...Object.values(Role)),
   projectController.getProject,
 );
 
