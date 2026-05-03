@@ -28,7 +28,7 @@ app.use(
 app.use('/api/v1', appRoutes);
 
 app.get('/', (req: Request, res: Response) => {
-  res.send('Welcome to th my porfolio - Rasel Shikder');
+  res.send('Welcome to th my porfolio  - Rasel Shikder');
 });
 
 app.use(globalError);
