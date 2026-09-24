@@ -19,12 +19,18 @@ async function connectDB() {
 }
 
 const startServer = async () => {
-  const port = envVars.PORT as string;
+
+  const port = Number(envVars.PORT);
+  if (!port || isNaN(port)) {
+    console.error('Port is not defined');
+    process.exit(1);
+  }
+
   try {
     await connectDB();
     server = http.createServer(app);
 
-    server.listen(port, () => {
+    server.listen(port, "0.0.0.0", () => {
       console.log(`🚀 Server is running on http://localhost:${port}`);
     });
   } catch (error) {
