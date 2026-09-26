@@ -114,6 +114,7 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import AppError from '../errorHelper/error';
 import { envVars } from '../configs/envVars';
+import { deleteImageFromCloudinary } from '../configs/cloudinaryConfig';
 
 // Checks if an error is a Prisma Client error
 const isPrismaError = (error: any): boolean => {
@@ -202,6 +203,31 @@ const processRawError = (err: any): typeof AppError.prototype => {
     res: Response, 
     next: NextFunction
 ) => {
+    // Clean up uploaded images if request failed during processing
+    // This is a safety measure to ensure no temporary files are left behind
+    if (req.file && req.file.path) {
+        try {
+            deleteImageFromCloudinary(req.file.path);
+        } catch (cleanupError) {
+            // Log cleanup error but don't throw to avoid hiding original error
+            console.error('[GlobalError] Failed to clean up uploaded file:', cleanupError);
+        }
+    }
+
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+        try {
+            const imagesUrl = (req.files as Express.Multer.File[]).map(
+                (file) => file.path
+            );
+            Promise.all(imagesUrl.map((url) => deleteImageFromCloudinary(url)))
+                .catch((cleanupError) => {
+                    console.error('[GlobalError] Failed to clean up uploaded files:', cleanupError);
+                });
+        } catch (cleanupError) {
+            console.error('[GlobalError] Failed to clean up uploaded files:', cleanupError);
+        }
+    }
+
     // Process the raw error into a standardized customError object
     const error = processRawError(err);
 
