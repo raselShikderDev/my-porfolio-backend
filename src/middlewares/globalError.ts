@@ -113,6 +113,7 @@
 /** biome-ignore-all lint/correctness/noUnusedFunctionParameters: ok */
 import { type Request, type Response, type NextFunction } from 'express';
 import AppError from '../errorHelper/error';
+import { envVars } from '../configs/envVars';
 
 // Checks if an error is a Prisma Client error
 const isPrismaError = (error: any): boolean => {
@@ -203,7 +204,6 @@ const processRawError = (err: any): typeof AppError.prototype => {
 ) => {
     // Process the raw error into a standardized customError object
     const error = processRawError(err);
-console.log(error);
 
     // Log the detailed stack trace for all 500 errors
     if (error.statusCode >= 500) {
@@ -214,7 +214,8 @@ console.log(error);
     res.status(error.statusCode).json({
         success: false,
         message: error.message,
-        errors: error, 
+        errors: error,
+        stack: envVars.NODE_ENV === 'development' ? error.stack : undefined,
     });
 };
 
