@@ -7,6 +7,7 @@
     "start": "bun run dist/server.js",
     "lint": "eslint 'src/**/*.{ts,tsx,js}'",
     "lint:fix": "eslint 'src/**/*.{ts,js}' --fix",
+    "test": "bun test",
     "postinstall": "prisma generate"
   },
   "devDependencies": {
@@ -28,7 +29,6 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
- 
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.7.0",
     "compression": "^1.8.1",
@@ -51,6 +51,7 @@
     "multer-storage-cloudinary": "^4.0.0",
     "prettier": "^3.6.2",
     "prisma": "^6.16.2",
+    "sanitize-html": "^2.17.7",
     "tsx": "^4.20.6",
     "typescript-eslint": "^8.45.0",
     "zod": "^4.1.11"

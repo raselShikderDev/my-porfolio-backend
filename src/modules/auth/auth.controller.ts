@@ -55,8 +55,8 @@ const ownerLogOut = asyncFunc(
 // Generate accesstoken by refresh Token
 const generateNewAccessToken = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    const refreshToken = req.cookies.refreshToken || req.headers.authorization;
-    const accessToken = req.cookies.accessToken || req.headers.authorization;
+    const refreshToken = req.cookies.refreshToken;
+    const accessToken = req.cookies.accessToken;
     const ownerCredentials = await authServices.generateNewAccessToken(
       accessToken,
       refreshToken,
