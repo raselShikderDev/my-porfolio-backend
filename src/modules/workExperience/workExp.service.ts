@@ -1,10 +1,15 @@
 import { StatusCodes } from 'http-status-codes';
 import { prisma } from '../../configs/db';
 import AppError from '../../errorHelper/error';
-// import { IWorkExp } from './WorkExp.interface';
+import { sanitizeRichText } from '../../utils/sanitize';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const createWorkExp = async (payload: any) => {
+  // Sanitize rich text content
+  if (payload.descreption) {
+    payload.descreption = sanitizeRichText(payload.descreption);
+  }
+
   const newWorkExp = await prisma.workExperince.create({
     data: payload,
   });
@@ -48,6 +53,11 @@ const getAllWorkExp = async () => {
 // Update a singe WorkExp
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const editWorkExp = async (id: number, payload: Partial<any>) => {
+  // Sanitize rich text content
+  if (payload.descreption) {
+    payload.descreption = sanitizeRichText(payload.descreption);
+  }
+
   const updatedWorkExp = await prisma.workExperince.update({
     where: { id },
     data: payload,

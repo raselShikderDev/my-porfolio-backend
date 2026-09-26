@@ -1,10 +1,15 @@
 import { StatusCodes } from 'http-status-codes';
 import { prisma } from '../../configs/db';
 import AppError from '../../errorHelper/error';
-// import { IProject } from './project.interface';
+import { sanitizeRichText } from '../../utils/sanitize';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const createProject = async (payload: any) => {
+  // Sanitize rich text content
+  if (payload.description) {
+    payload.description = sanitizeRichText(payload.description);
+  }
+
   const newProject = await prisma.project.create({
     data: payload,
   });
@@ -44,6 +49,11 @@ const getAllProject = async () => {
 // Update a singe project
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const editProject = async (id: number, payload: Partial<any>) => {
+  // Sanitize rich text content
+  if (payload.description) {
+    payload.description = sanitizeRichText(payload.description);
+  }
+
   const updatedProject = await prisma.project.update({
     where: { id },
     data: payload,
