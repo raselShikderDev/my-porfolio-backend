@@ -1,10 +1,8 @@
-/* eslint-disable no-console */
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { StatusCodes } from 'http-status-codes';
 import stream from 'stream';
 import { envVars } from './envVars';
 import AppError from '../errorHelper/error';
-
 
 cloudinary.config({
   cloud_name: envVars.CLOUDINARY_NAME,
@@ -12,79 +10,69 @@ cloudinary.config({
   api_secret: envVars.CLOUDINARY_API_SECRET,
 });
 
-// Uploading Buffer in cloudinary
 export const uploadBufferCloudinary = async (
   buffer: Buffer,
-  fileName: string,
+  fileName: string
 ): Promise<UploadApiResponse> => {
   return new Promise((resolve, reject) => {
-
     try {
-      const public_id = `porfolio/${fileName}-${Date.now()}`;
+      const public_id = `portfolio/${fileName}-${Date.now()}`;
       const bufferStream = new stream.PassThrough();
       bufferStream.end(buffer);
-      
       cloudinary.uploader
         .upload_stream(
           {
             resource_type: 'auto',
             public_id,
-            folder: 'pdf',
+            folder: 'portfolio',
           },
           (err, result) => {
             if (err) {
               return reject(err);
             }
             resolve(result as UploadApiResponse);
-          },
+          }
         )
         .end(buffer);
-      const uploader = cloudinary.uploader
-        .upload_stream(
-          {
-            resource_type: 'auto',
-            public_id,
-            folder: 'porfolio',
-          },
-          (err, result) => {
-            if (err) {
-              return reject(err);
-            }
-            resolve(result as UploadApiResponse);
-          },
-        )
-        .end(buffer);
-      console.log('uploader', uploader);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       throw new AppError(
         StatusCodes.INTERNAL_SERVER_ERROR,
-        `Faild to upload file:${error.message}`,
+        `Failed to upload file:${message}`
       );
     }
   });
 };
 
-// Deleting image from cloudinary
-export const deleteImageFromCloudinary = async (url: string) => {
+export const extractPublicId = (urlOrPath: string): string | null => {
+  if (!urlOrPath || typeof urlOrPath !== 'string') {
+    return null;
+  }
+  const urlRegex = /^.*\/(\d+)\/(.+?\.(?:jpg|jpeg|png|gif|webp))$/i;
+  const versionRegex = /v(\d+)\/(.+?)\.$/i;
+  const match = urlOrPath.match(urlRegex) || urlOrPath.match(versionRegex);
+  if (match && match[2]) {
+    return match[2];
+  }
+  return null;
+};
+
+export const deleteImageFromCloudinary = async (urlOrPath: string): Promise<boolean> => {
   try {
-    const regex = /v\d+\/(.*?)\.(jpg|jpeg|png|gif|webp)$/i;
-
-    const match = url.match(regex);
-
-    if (match && match[1]) {
-      const public_id = match[1];
-      await cloudinary.uploader.destroy(public_id);
+    const public_id = extractPublicId(urlOrPath);
+    if (!public_id) {
+      return false;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
+    await cloudinary.uploader.destroy(public_id);
+    return true;
+  } catch (error) {
     throw new AppError(
-      StatusCodes.UNAUTHORIZED,
-      'Faild to delete image in cloudinary',
-      error.message,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Failed to delete image in Cloudinary',
+      error instanceof Error ? error.message : 'Unknown error'
     );
   }
 };
 
 export const cloudinaryUpload = cloudinary;
+

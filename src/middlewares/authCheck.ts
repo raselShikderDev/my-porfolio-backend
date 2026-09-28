@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { NextFunction, Request, Response } from 'express';
 import { envVars } from '../configs/envVars';
 import { verifyJwtToken } from '../utils/jwt';
@@ -11,11 +10,11 @@ const authCheck =
   (...authRole: string[]) =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      if (req.body) console.log('in auth', req.body);
-      // if (req.body.data) console.log('in auth', req.body.data);
-      console.log('Validating owner');
-
       const accessToken = req.headers.authorization || req.cookies.accessToken;
+
+      if (!accessToken) {
+        throw new AppError(StatusCodes.UNAUTHORIZED, 'Authentication required');
+      }
 
       const verifiedToken = (await verifyJwtToken(
         accessToken,
@@ -61,11 +60,9 @@ const authCheck =
       }
 
       req.user = verifiedToken;
-      console.log('Owner is authenticated');
-      
+
       next();
     } catch (error) {
-      console.log('Owner is not authenticated');
       next(error);
     }
   };
