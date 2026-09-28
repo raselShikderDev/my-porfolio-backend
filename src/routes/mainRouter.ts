@@ -4,6 +4,7 @@ import { userRoute } from '../modules/users/user.route';
 import { projectRoute } from '../modules/project/project.route';
 import { workExpRoute } from '../modules/workExperience/workExp.route';
 import { blogRouter } from '../modules/blog/blog.route';
+import { healthRoute } from './health/health.route';
 
 const router = Router();
 
@@ -27,6 +28,10 @@ const mainRoutes = [
   {
     path: '/blogs',
     route: blogRouter,
+  },
+  {
+    path: '/health',
+    route: healthRoute,
   },
 ];
 

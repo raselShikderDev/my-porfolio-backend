@@ -13,13 +13,36 @@ async function connectDB() {
     console.log('Database sucssfully connected');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    console.log(`Database connection failed ${error.message}`);
+    console.error(`Database connection failed ${error.message}`);
     process.exit(1);
   }
 }
 
-const startServer = async () => {
+async function gracefulShutdown(signal: string) {
+  console.log(`${signal} received. Shutting down gracefully...`);
+  if (server) {
+    server.close(async () => {
+      console.log('HTTP server closed.');
+      try {
+        await prisma.$disconnect();
+        console.log('Database connection closed.');
+      } catch (error) {
+        console.error('Error during database disconnect:', error);
+      }
+      process.exit(0);
+    });
 
+    // Force shutdown after timeout
+    setTimeout(() => {
+      console.error('Could not close connections in time, shutting down forcefully.');
+      process.exit(1);
+    }, 10000);
+  } else {
+    process.exit(0);
+  }
+}
+
+const startServer = async () => {
   const port = Number(envVars.PORT);
   if (!port || isNaN(port)) {
     console.error('Port is not defined');
@@ -39,7 +62,14 @@ const startServer = async () => {
   }
 };
 
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
 (async () => {
   await startServer();
-  await seedOwner();
+  try {
+    await seedOwner();
+  } catch (error) {
+    console.error('Owner seeding failed, but server remains running.', error);
+  }
 })();

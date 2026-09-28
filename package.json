@@ -11,17 +11,18 @@
     "postinstall": "prisma generate"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "@types/dotenv": "^8.2.3",
-    "@types/express": "^5.0.3",
     "@prisma/client": "^6.16.2",
     "@types/bcrypt": "^6.0.0",
+    "@types/bun": "latest",
     "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.9",
     "@types/cors": "^2.8.19",
+    "@types/dotenv": "^8.2.3",
+    "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.5.2",
+    "@types/sanitize-html": "^2.16.1",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0"
   },
