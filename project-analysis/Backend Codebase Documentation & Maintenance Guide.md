@@ -2,667 +2,1861 @@
 
 ## 1. Document Purpose
 
-This document serves as the primary technical handover and maintenance guide for the **myPortfolio-backend** repository. It is intended for new developers who need to understand the backend architecture, implementation details, security measures, development workflow, deployment setup, and future improvement opportunities without needing to inspect source code first.
+This document is the primary technical handover and maintenance guide for the **myPortfolio-backend** repository.
 
-**Audience:** New backend developers, technical leads, and contributors.
+It is intended to help developers understand the backend architecture, implementation, security measures, testing, deployment configuration, maintenance considerations, and future improvement opportunities without needing to inspect the entire codebase first.
 
-**Scope:** This document describes the current repository state as of the v2 branch (commit `2b1ffb3`). It includes information about the technology stack, architecture, API contracts, database schema, security configurations, testing infrastructure, and operational procedures.
+**Current documented branch:** `v2`  
+**Current documented commit:** `2b1ffb3`
 
-**Note:** All information is derived directly from the repository files and commit history. Where something cannot be verified from the current codebase, it is explicitly marked as "Not verified from the current codebase."
-
----
-## 2. Project Overview
-
-The backend powers the **myPortfolio** application, providing an administrative interface for managing projects, work experiences, and blog posts. It is a RESTful API built with **Bun**, **TypeScript**, **Express**, and **Prisma** ORM, serving as the data layer for the public-facing portfolio website.
-
-**Main Responsibilities:**
-- Authentication and authorization for admin users.
-- CRUD operations for three core entities: Users, Projects, Work Experience entries, and Blogs.
-- File upload handling (images) with Cloudinary integration.
-- Rich‑text content handling and sanitization for blog posts.
-- Environment‑based configuration and validation.
-- Comprehensive testing and error handling.
-
-**API Prefix:** `/api/v1`
-
-**Current API Modules (verified from mainRouter.ts):**
-- `/api/v1/users` – User management (creation, retrieval).
-- `/api/v1/auth` – Authentication (login, logout, token refresh).
-- `/api/v1/projects` – Project management.
-- `/api/v1/work-experience` – Work‑experience entries.
-- `/api/v1/blogs` – Blog posts with publishing, stats, and media attachments.
-- `/health` – Health check endpoint.
+This document describes the implementation that was verified during the backend improvement work. Where a capability is not implemented or could not be verified, it is clearly identified as a future improvement or not verified.
 
 ---
-## 3. Technology Stack
 
-| Technology | Role in this Repository |
-|------------|------------------------|
-| **Bun** | JavaScript/TypeScript runtime, package manager (via `bun.lock`), build tool (`bun run dev`, `bun test`). |
-| **TypeScript** | Primary language, compiled to CommonJS (`dist/server.js`). Configuration in `tsconfig.json`. |
-| **Express** | Web framework (`express` v5.1.0) used for routing, middleware, and request handling. |
-| **Prisma** | ORM (v6.16.2) defining database models and providing type‑safe queries. |
-| **PostgreSQL** | Relational database (provider via `DATABASE_URL`). |
-| **Cloudinary** | Image storage and CDN for uploaded assets (via `multer-storage-cloudinary`). |
-| **Multer** | In‑memory file handling for single/multiple image uploads; validates MIME types and size. |
-| **Zod** | Runtime validation library (v4.1.11) used via `requestValidator` middleware. |
-## 4. Architecture Overview
+# 2. Project Overview
 
-The application follows a **layered architecture** typical of Express‑based services.
+The backend powers the **myPortfolio** application.
 
+It provides a REST API for:
+
+- Authentication and authorization.
+- User and owner management.
+- Project management.
+- Work experience management.
+- Blog management.
+- Image uploads through Cloudinary.
+- Server-side rich-text sanitization.
+- Database access through Prisma.
+- Request validation using Zod.
+- Centralized error handling.
+- Health checking.
+- Graceful server shutdown.
+
+### API Prefix
+
+```text
+/api/v1
 ```
+
+### Main API Modules
+
+```text
+/api/v1/users
+/api/v1/auth
+/api/v1/projects
+/api/v1/work-experience
+/api/v1/blogs
+```
+
+The application also exposes:
+
+```text
+/health
+```
+
+for the database health check.
+
+---
+
+# 3. Technology Stack
+
+| Technology        | Purpose                                                         |
+| ----------------- | --------------------------------------------------------------- |
+| Bun               | JavaScript/TypeScript runtime, package manager, and test runner |
+| TypeScript        | Primary programming language                                    |
+| Express           | HTTP server and routing framework                               |
+| Prisma            | ORM and database access                                         |
+| PostgreSQL        | Relational database                                             |
+| Cloudinary        | Image storage                                                   |
+| Multer            | Multipart file handling and upload validation                   |
+| Zod               | Runtime request validation                                      |
+| JSON Web Token    | Authentication tokens                                           |
+| bcrypt            | Password hashing                                                |
+| cookie-parser     | Cookie parsing                                                  |
+| CORS              | Frontend origin access control                                  |
+| compression       | HTTP response compression                                       |
+| sanitize-html     | Server-side rich-text sanitization                              |
+| http-status-codes | HTTP status constants                                           |
+| Docker            | Containerized production deployment                             |
+| Vercel            | Deployment configuration                                        |
+
+---
+
+# 4. Architecture Overview
+
+The backend follows a layered Express architecture.
+
+```text
 Client
   |
   v
-Express Application (app.ts)
+Express Application
   |
-  +--> Middleware (cors, compression, json, urlencoded, cookieParser)
+  +--> Global Middleware
+  |      |
+  |      +--> compression
+  |      +--> express.json
+  |      +--> express.urlencoded
+  |      +--> cookieParser
+  |      +--> cors
   |
-  +--> Routes (mainRouter.ts) → Mounted under /api/v1
+  +--> Routes
   |
-  +--> Route Modules (auth, users, projects, workExperience, blogs)
+  +--> Route Modules
   |
-  +--> Controllers (module controllers) → Business logic
+  +--> Authentication / Authorization
   |
-  +--> Services (module services) → Data access via Prisma
+  +--> Request Validation
   |
-  +--> Validation (Zod schemas) via requestValidator middleware
+  +--> Controllers
   |
-  +--> Prisma ORM → PostgreSQL Database
+  +--> Services
+  |
+  +--> Prisma
+  |
+  +--> PostgreSQL
+  |
+  +--> Cloudinary for uploaded images
 ```
 
-**External Services:**
-- **Cloudinary** – image upload and storage.
+### Typical Request Flow
 
-**Request Flow (typical `/api/v1` route):**
-1. Incoming HTTP request.
-2. `compression` → `express.json()` → `express.urlencoded()` → `cookieParser()` → `cors()`.
-3. `/api/v1` routes trigger `multerUpload` (if file upload), then `authCheck` (JWT + role), then `requestValidator` (Zod), then controller.
-4. Controller calls service layer (`*Services`) which interacts with `Prisma`.
-5. Services perform sanitization (`sanitizeRichText`) for rich‑text fields.
-6. Response is formatted by `sendResonse` utility and returned.
-
-**Authentication Flow:**
-- Login (`POST /api/v1/auth/login`) validates credentials, generates JWT access & refresh tokens, sets HTTP‑only, Secure, SameSite=None cookies.
-- Protected routes verify token via `authCheck` middleware (extracts token from Authorization header or cookie, verifies JWT, checks user existence, `isActive`, `isVerified`, and role).
-- Token refresh (`POST /api/v1/auth/generate-token`) uses refresh token to issue a new access token.
-- Logout clears cookies.
-
-## 5. Project Directory Structure
-
-The repository follows a **src‑centric** layout. Below is the documented current structure (as of commit `2b1ffb3`):
-
+```text
+HTTP Request
+    |
+    v
+Express Middleware
+    |
+    v
+Route
+    |
+    +--> Multer, when file upload is required
+    |
+    +--> Authentication, when route is protected
+    |
+    +--> Zod validation, when configured
+    |
+    v
+Controller
+    |
+    v
+Service
+    |
+    +--> sanitizeRichText, when applicable
+    |
+    v
+Prisma
+    |
+    v
+PostgreSQL
+    |
+    v
+Standardized Response
 ```
+
+---
+
+# 5. Directory Structure
+
+The important current project structure is:
+
+```text
 myPortfolio-backend/
-├─ src/
-│  ├─ app.ts                     # Express app initialization & middleware registration
-│  ├─ server.ts                  # Entry point: DB connection, server start, seedOwner
-│  ├─ configs/
-│  │  ├─ db.ts                   # PrismaClient singleton
-│  │  ├─ envVars.ts               # Environment validation (dotenv)
-│  │  ├─ cloudinaryConfig.ts     # Cloudinary configuration & upload utilities
-│  │  └─ multerConfig.ts         # Multer Cloudinary storage settings
-│  ├─ middlewares/
-│  │  ├─ authCheck.ts            # JWT authentication & role authorization
-│  │  ├─ requestValidator.ts     # Zod validation middleware
-│  │  ├─ notFound.ts             # 404 handler for unmatched routes
-│  │  └─ globalError.ts          # Central error processing & cleanup
-│  ├─ modules/
-│  │  ├─ auth/
-│  │  │  ├─ auth.route.ts
-│  │  │  ├─ auth.controller.ts
-│  │  │  ├─ auth.service.ts
-│  │  │  └─ auth.schema.ts (unused – commented out)
-│  │  ├─ users/
-│  │  │  ├─ user.route.ts
-│  │  │  ├─ user.controller.ts
-│  │  │  ├─ user.interface.ts
-│  │  │  └─ user.services.ts
-│  │  ├─ project/
-│  │  │  ├─ project.route.ts
-│  │  │  ├─ project.controller.ts
-│  │  │  ├─ project.service.ts
-│  │  │  └─ project.schema.ts
-│  │  ├─ workExperience/
-│  │  │  ├─ workExp.route.ts
-│  │  │  ├─ workExp.controller.ts
-│  │  │  ├─ workExp.service.ts
-│  │  │  └─ workExp.schema.ts
-│  │  └─ blog/
-│  │     ├─ blog.route.ts
-│  │     ├─ blog.controller.ts
-│  │     ├─ blog.service.ts
-│  │     ├─ blog.interface.ts
-│  │     └─ blog.schmea.ts (typo in filename)
-│  ├─ utils/
-│  │  ├─ jwt.ts                  # generateAccessToken & verifyJwtToken
-│  │  ├─ userToken.ts            # createUserTokens (access + refresh)
-│  │  ├─ setCookies.ts           # setAuthCookies (httpOnly, secure, sameSite)
-│  │  ├─ sanitize.ts            # sanitizeRichText (via sanitize-html)
-│  │  ├─ seedOwner.ts            # Seed initial owner user
-│  │  ├─ response.ts             # sendResonse helper (statusCode, success, message, data, meta)
-│  │  └─ asyncFync.ts            # asyncHandler wrapper for Express error handling
-│  ├─ errorHelper/
-│  │  ├─ error.ts               # AppError class
-│  │  └─ notFoundHandler.ts (unused) / errorHandler.ts (unused)
-│  │  └─ (globalError.ts already listed above)
-│  ├─ constraints/
-│  │  └─ constraints.ts         # Default values for seedOwner
-│  ├─ routes/
-│  │  ├─ mainRouter.ts           # Mounts all module routes under /api/v1
-│  │  └─ health/
-│  │      ├─ health.route.ts
-│  │      └─ health.controller.ts
-│  └─ package.json, tsconfig.json, Dockerfile, .dockerignore, vercel.json, .env.example, .gitignore
-├─ prisma/
-│  ├─ schema.prisma            # Database models & enums
-│  └─ (migrations/ not present in repo)
-├─ tests/
-│  ├─ configs/
-│  │  ├─ envVars.test.ts
-│  │  └─ multerConfig.test.ts
-│  ├─ middlewares/
-│  │  └─ authCheck.test.ts
-│  ├─ utils/
-│  │  ├─ jwt.test.ts
-│  │  └─ sanitize.test.ts
-│  └─ (other test files may exist but not listed)
-├─ project-analysis/ (contains previous documentation)
-└─ .env, .env.example, .env.local (example only)
+│
+├── src/
+│   ├── configs/
+│   │   ├── db.ts
+│   │   ├── envVars.ts
+│   │   ├── cloudinaryConfig.ts
+│   │   └── multerConfig.ts
+│   │
+│   ├── middlewares/
+│   │   ├── authCheck.ts
+│   │   ├── requestValidator.ts
+│   │   ├── notFound.ts
+│   │   └── globalError.ts
+│   │
+│   ├── modules/
+│   │   ├── auth/
+│   │   │   ├── auth.route.ts
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── auth.service.ts
+│   │   │   └── auth.schema.ts
+│   │   │
+│   │   ├── users/
+│   │   │   ├── user.route.ts
+│   │   │   ├── user.controller.ts
+│   │   │   ├── user.interface.ts
+│   │   │   └── user.services.ts
+│   │   │
+│   │   ├── project/
+│   │   │   ├── project.route.ts
+│   │   │   ├── project.controller.ts
+│   │   │   ├── project.service.ts
+│   │   │   └── project.schema.ts
+│   │   │
+│   │   ├── workExperience/
+│   │   │   ├── workExp.route.ts
+│   │   │   ├── workExp.controller.ts
+│   │   │   ├── workExp.service.ts
+│   │   │   └── workExp.schema.ts
+│   │   │
+│   │   └── blog/
+│   │       ├── blog.route.ts
+│   │       ├── blog.controller.ts
+│   │       ├── blog.service.ts
+│   │       ├── blog.interface.ts
+│   │       └── blog.schmea.ts
+│   │
+│   ├── utils/
+│   │   ├── jwt.ts
+│   │   ├── userToken.ts
+│   │   ├── setCookies.ts
+│   │   ├── sanitize.ts
+│   │   ├── seedOwner.ts
+│   │   ├── response.ts
+│   │   └── asyncFync.ts
+│   │
+│   ├── errorHelper/
+│   │   └── error.ts
+│   │
+│   ├── constraints/
+│   │   └── constraints.ts
+│   │
+│   ├── routes/
+│   │   ├── mainRouter.ts
+│   │   └── health/
+│   │       ├── health.route.ts
+│   │       └── health.controller.ts
+│   │
+│   ├── app.ts
+│   ├── server.ts
+│   └── index.d.ts
+│
+├── prisma/
+│   └── schema.prisma
+│
+├── tests/
+│   ├── configs/
+│   │   ├── envVars.test.ts
+│   │   └── multerConfig.test.ts
+│   │
+│   ├── middlewares/
+│   │   └── authCheck.test.ts
+│   │
+│   └── utils/
+│       ├── jwt.test.ts
+│       └── sanitize.test.ts
+│
+├── project-analysis/
+├── Dockerfile
+├── .dockerignore
+├── package.json
+├── bun.lock
+├── tsconfig.json
+├── eslint.config.mjs
+├── vercel.json
+├── .gitignore
+└── .env.example
 ```
 
-**Key Naming Inconsistencies (preserved as‑is):**
-- `workExperince` (misspelled) in Prisma model name and service file names.
-- `descreption` (misspelled) in `WorkExperince` model and schema.
-- `blog.schmea.ts` (typo) in blog module.
-## 6. Application Startup Flow
+Some existing filenames contain spelling inconsistencies. They are documented exactly as they exist and should not be renamed casually.
 
-The application follows a deterministic startup sequence, ensuring the database is ready before listening for HTTP requests.
+Examples:
 
-**Step‑by‑step flow (see `src/server.ts` and `src/app.ts`):**
-
-1. **Environment Validation** – `src/configs/envVars.ts` loads `.env` files and validates all required variables (`PORT`, `DATABASE_URL`, `FRONTEND_URL`, JWT secrets, Cloudinary credentials, etc.). If any missing, the process exits with an error.
-2. **Database Connection** – `src/server.ts` defines `connectDB()`: calls `prisma.$connect()`; on success logs “Database successfully connected”; on failure logs the error and calls `process.exit(1)`.
-3. **Owner Seeding (development only)** – After DB connection, `seedOwner()` is invoked (inside an IIFE in `server.ts`). It checks whether a user with the email from `OWNER_EMAIL` exists; if not, it creates the owner using `bcrypt.hash`, copying default data from `src/constraints/constraints.ts` (skills, address, social URLs, etc.). Any seeding error is logged but does not block server startup.
-4. **Express App Creation** – `src/app.ts` creates an Express instance, disables `x‑powered‑by`, registers global middleware (`compression`, `express.json`, `express.urlencoded`, `cookieParser`, `cors` with `FRONTEND_URL`), and mounts the health check route (`GET /health`).
-5. **Route Registration** – `src/routes/mainRouter.ts` imports all module routers (`auth`, `users`, `projects`, `workExperience`, `blogs`, `health`) and attaches them under `/api/v1`.
-6. **Error Middleware** – Global error handling middleware (`globalError.ts`) and not‑found handler (`notFound.ts`) are attached after route definitions.
-7. **HTTP Server & Listener** – In `server.ts`, an HTTP server is created with `http.createServer(app)`, then `.listen(port, "0.0.0.0", callback)`. The callback logs the startup message.
-8. **Graceful Shutdown** – Event listeners for `SIGINT` and `SIGTERM` trigger `gracefulShutdown(signal)`, which closes the HTTP server, disconnects Prisma, and exits after a 10‑second timeout (forceful shutdown if necessary).
-
-**Summary Diagram:**
-
+```text
+asyncFync.ts
+sendResonse
+WorkExperince
+descreption
+user.services.ts
+blog.schmea.ts
 ```
-ENV LOAD → envVars.validate
-    ↓
-prisma.connect() → seedOwner() (dev only)
-    ↓
-app.ts (middleware + routes) → http.server.listen()
-## 7. API Architecture
 
-The API is organized under the prefix `/api/v1` and consists of route modules, controllers, services, and validation schemas.
+These names should only be changed deliberately because they may affect imports, database contracts, or API compatibility.
 
-**Main Route Modules (from `mainRouter.ts`):**
-- `users` → `user.route.ts`
-- `auth` → `auth.route.ts`
-- `projects` → `project.route.ts`
-- `work-experience` → `workExp.route.ts`
-- `blogs` → `blog.route.ts`
-- `health` → `health.route.ts`
+---
 
-**Major Endpoints (verified from source files):**
+# 6. Application Startup Flow
 
-| Method | Endpoint | Purpose | Authentication | Validation | File Upload |
-|--------|----------|---------|----------------|------------|-------------|
-| GET    | `/api/v1/users/getme` | Retrieve current user profile | Required (Owner) | Yes (`requestValidator` not used; authCheck ensures role) | No |
-| POST   | `/api/v1/users/` | Create a new user | Required (Owner) | Yes (Zod schema in `user.route`?) | No |
-| POST   | `/api/v1/auth/login` | Authenticate owner and obtain tokens | No | Yes (Zod commented out) | No |
-| POST   | `/api/v1/auth/logout` | Invalidate session | Required | No | No |
-| POST   | `/api/v1/auth/generate-token` | Refresh access token using refresh token | Required (cookie) | No | No |
-| POST   | `/api/v1/projects/create` | Create a new project (includes image upload) | Required | Yes (`ProjectCreateSchema`) | Yes (`multerUpload.single('file')`) |
-| PATCH  | `/api/v1/projects/edit/:id` | Update project (image upload optional) | Required | Yes (`ProjectUpdateSchema`) | Yes (`multerUpload.single('file')`) |
-| GET   | `/api/v1/projects/all` | List all projects (public) | No | No | No |
-| GET   | `/api/v1/projects/:id` | Get single project (public) | No | No | No |
-| DELETE | `/api/v1/projects/:id` | Remove a project | Required | No | No |
-| POST   | `/api/v1/work-experience/create` | Create work experience entry | Required | Yes (`WorkExperienceCreateSchema`) | No |
-| PATCH  | `/api/v1/work-experience/edit/:id` | Update work experience | Required | Yes (`WorkExperienceUpdateSchema`) | No |
-| GET   | `/api/v1/work-experience/all` | List all work experiences (public) | No | No | No |
-| GET   | `/api/v1/work-experience/:id` | Get single entry (protected) | Required | No | No |
-| DELETE | `/api/v1/work-experience/:id` | Delete entry | Required | No | No |
-| POST   | `/api/v1/blogs/create` | Create blog (multiple image uploads) | Required | Yes (`blogCreateSchema`) | Yes (`multerUpload.array('files')`) |
-| PATCH  | `/api/v1/blogs/update/:slug` | Update blog (image upload) | Required | Yes (`blogUpdateSchema`) | Yes (`multerUpload.array('files')`) |
-| GET   | `/api/v1/blogs/all` | List blogs with pagination and filters | No | No | No |
-| GET   | `/api/v1/blogs/:slug` | Get blog by slug (increments view) | No | No | No |
-| PATCH  | `/api/v1/blogs/publish/:slug` | Publish blog | Required | No | No |
-| PATCH  | `/api/v1/blogs/unpublish/:slug` | Unpublish blog | Required | No | No |
-| DELETE | `/api/v1/blogs/:slug` | Delete blog | Required | No | No |
-| GET   | `/api/v1/blogs/stats` | Retrieve blog statistics | Required | No | No |
-| GET   | `/health` | Health check (database connectivity) | No | No | No |
+The application startup process consists of the following major stages.
 
-**Authentication Requirements:**
-- Owner role (`OWNER`) is the only role defined in `enum Role` (`MANAGER`, `OWNER`). The `authCheck` middleware enforces either role via `authRole` argument.
-## 8. Authentication and Authorization
+```text
+Environment Validation
+        |
+        v
+Database Connection
+        |
+        v
+Owner Seeding
+        |
+        v
+Express Application Setup
+        |
+        v
+Route Registration
+        |
+        v
+HTTP Server Start
+```
 
-The backend implements a **JWT‑based authentication** system with cookie‑based token storage, role‑based authorization, and comprehensive validation of user status.
+### Environment Validation
 
-### Token Architecture
+Environment configuration is handled by:
 
-**Access Token & Refresh Token:**
-- `src/utils/userToken.ts` creates both tokens using separate secrets and expiration times (`JWT_ACCESS_SECRET/REFRESH_SECRET`).
-- Access token expires faster (e.g., `1h`), refresh token longer (e.g., `7d`).
+```text
+src/configs/envVars.ts
+```
 
-**Token Payload (verified from `src/utils/jwt.ts` and `authCheck.ts`):**
-```typescript
+Required environment configuration is validated before normal application startup.
+
+The configuration includes values such as:
+
+- `PORT`
+- `DATABASE_URL`
+- `FRONTEND_URL`
+- JWT configuration
+- Cloudinary configuration
+- Owner configuration
+
+Secrets must remain in environment variables and must not be committed to Git.
+
+### Database Connection
+
+Prisma is used to connect to PostgreSQL.
+
+The server establishes the database connection before starting the HTTP server.
+
+### Owner Seeding
+
+`seedOwner.ts` is responsible for creating the initial owner when required.
+
+The seeding process uses the configured owner information and password hashing.
+
+The seed operation was also adjusted so that a seed failure does not unnecessarily terminate an otherwise running server.
+
+### Express Initialization
+
+`src/app.ts` configures:
+
+- compression
+- JSON parsing
+- URL-encoded body parsing
+- cookie parsing
+- CORS
+- security-related Express configuration
+- routes
+- error handling
+
+The Express `x-powered-by` header is disabled.
+
+### Graceful Shutdown
+
+The server handles:
+
+```text
+SIGINT
+SIGTERM
+```
+
+The shutdown process closes the HTTP server and disconnects Prisma.
+
+A forced shutdown timeout is used so the process does not remain indefinitely active.
+
+---
+
+# 7. API Architecture
+
+The API is organized into route, controller, service, and validation layers.
+
+## Main Modules
+
+```text
+users
+auth
+projects
+work-experience
+blogs
+health
+```
+
+## Main Endpoints
+
+### Users
+
+```text
+GET /api/v1/users/getme
+POST /api/v1/users/
+```
+
+### Authentication
+
+```text
+POST /api/v1/auth/login
+POST /api/v1/auth/logout
+POST /api/v1/auth/generate-token
+```
+
+### Projects
+
+```text
+POST   /api/v1/projects/create
+PATCH  /api/v1/projects/edit/:id
+GET    /api/v1/projects/all
+GET    /api/v1/projects/:id
+DELETE /api/v1/projects/:id
+```
+
+### Work Experience
+
+```text
+POST   /api/v1/work-experience/create
+PATCH  /api/v1/work-experience/edit/:id
+GET    /api/v1/work-experience/all
+GET    /api/v1/work-experience/:id
+DELETE /api/v1/work-experience/:id
+```
+
+### Blogs
+
+```text
+POST   /api/v1/blogs/create
+PATCH  /api/v1/blogs/update/:slug
+GET    /api/v1/blogs/all
+GET    /api/v1/blogs/:slug
+PATCH  /api/v1/blogs/publish/:slug
+PATCH  /api/v1/blogs/unpublish/:slug
+DELETE /api/v1/blogs/:slug
+GET    /api/v1/blogs/stats
+```
+
+### Health
+
+```text
+GET /health
+```
+
+The health endpoint checks database connectivity.
+
+---
+
+# 8. Authentication and Authorization
+
+The backend uses JWT-based authentication.
+
+The system uses:
+
+```text
+Access Token
+Refresh Token
+```
+
+Tokens are stored in HTTP-only cookies.
+
+## Token Configuration
+
+JWT signing uses the configured JWT secrets.
+
+The access token and refresh token use separate configuration values and expiration settings.
+
+The exact expiration values should be taken from the current environment configuration rather than hardcoded in documentation.
+
+## Cookie Security
+
+Authentication cookies use security-oriented settings including:
+
+```text
+httpOnly: true
+secure: true
+sameSite: "none"
+```
+
+These settings prevent direct JavaScript access to the cookies and require secure transport.
+
+## Authentication Flow
+
+### Login
+
+```text
+POST /api/v1/auth/login
+```
+
+The login process:
+
+1. Receives the owner's credentials.
+2. Validates the credentials.
+3. Generates access and refresh tokens.
+4. Stores the tokens in authentication cookies.
+5. Returns the authenticated owner information.
+
+### Refresh Token
+
+```text
+POST /api/v1/auth/generate-token
+```
+
+The refresh token is read from the authentication cookie.
+
+If valid, a new access token is generated.
+
+### Logout
+
+```text
+POST /api/v1/auth/logout
+```
+
+The authentication cookies are cleared.
+
+## Authorization Middleware
+
+Protected routes use:
+
+```text
+src/middlewares/authCheck.ts
+```
+
+The middleware:
+
+1. Reads the access token from the configured cookie.
+2. Verifies the JWT.
+3. Finds the corresponding user.
+4. Checks account status.
+5. Checks verification status.
+6. Checks the required role.
+7. Attaches authenticated user information to the request.
+
+The authentication hardening restricts token extraction to the configured cookie-based mechanism.
+
+The implementation does not currently provide:
+
+- token blacklist
+- server-side session store
+- automatic token revocation
+- automatic secret rotation
+- global rate limiting
+
+These are future security improvements.
+
+---
+
+# 9. User and Owner Access Model
+
+The Prisma schema defines the following roles:
+
+```text
+MANAGER
+OWNER
+```
+
+The portfolio currently uses the owner as the primary administrative account.
+
+The user status model includes:
+
+```text
+ACTIVE
+INACTIVE
+BLOCKED
+```
+
+Protected operations use the authentication middleware to verify the required role.
+
+Administrative operations such as creating, editing, publishing, and deleting portfolio content require appropriate authorization.
+
+The `MANAGER` role exists in the schema but is not currently used as a separate permission system.
+
+---
+
+# 10. Database
+
+The project uses:
+
+```text
+PostgreSQL
+```
+
+through:
+
+```text
+Prisma
+```
+
+The schema is located at:
+
+```text
+prisma/schema.prisma
+```
+
+The database contains the primary models for:
+
+```text
+User
+Project
+WorkExperince
+Blog
+```
+
+## User
+
+The user model stores:
+
+- name
+- email
+- password hash
+- avatar
+- skills
+- address
+- phone
+- account status
+- role
+- verification status
+- social links
+- timestamps
+
+## Project
+
+Projects contain information such as:
+
+- title
+- description
+- image
+- technology stack
+- live URL
+- GitHub URL
+- user relationship
+- timestamps
+
+## WorkExperince
+
+The existing Prisma model name is intentionally preserved:
+
+```text
+WorkExperince
+```
+
+The existing spelling is part of the current implementation.
+
+Work experience stores:
+
+- company
+- role
+- description field
+- user relationship
+- start date
+- end date
+
+## Blog
+
+Blog records contain:
+
+- title
+- content
+- images
+- publication status
+- publication date
+- slug
+- views
+- author relationship
+- tags
+- timestamps
+
+The exact database field types should always be treated according to the current `prisma/schema.prisma`.
+
+## Relationships
+
+The main relationships are:
+
+```text
+User
+ ├── Blog[]
+ ├── Project[]
+ └── WorkExperince[]
+```
+
+## Migration History
+
+Migration files are not documented here unless they are present and verified in the repository.
+
+No specific historical migration is claimed by this document.
+
+If migration files are not present in the current repository snapshot, database migration history cannot be reconstructed reliably from this documentation alone.
+
+---
+
+# 11. Request Validation
+
+Request validation uses:
+
+```text
+Zod
+```
+
+The validation middleware is:
+
+```text
+src/middlewares/requestValidator.ts
+```
+
+The middleware is responsible for processing validated request data before it reaches the controller.
+
+For multipart requests, file handling occurs before body validation where required.
+
+Validation schemas are maintained within their respective modules.
+
+Examples include:
+
+```text
+ProjectCreateSchema
+ProjectUpdateSchema
+WorkExperienceCreateSchema
+WorkExperienceUpdateSchema
+blogCreateSchema
+blogUpdateSchema
+```
+
+Not every endpoint necessarily uses the same validation flow. The individual route definition is the source of truth.
+
+---
+
+# 12. File Uploads
+
+File uploads use:
+
+```text
+Multer
+Cloudinary
+multer-storage-cloudinary
+```
+
+## Supported MIME Types
+
+The current upload configuration supports:
+
+```text
+image/jpeg
+image/jpg
+image/png
+image/webp
+image/gif
+```
+
+## File Size
+
+Maximum file size:
+
+```text
+10 MB per file
+```
+
+## File Count
+
+Maximum files per request:
+
+```text
+10
+```
+
+The actual route determines whether a request accepts a single file or multiple files.
+
+Examples:
+
+```text
+multerUpload.single('file')
+multerUpload.array('files')
+```
+
+## Cloudinary Storage
+
+Uploaded images are stored through Cloudinary.
+
+The upload configuration uses the configured Cloudinary storage settings.
+
+## Filename and Public ID Handling
+
+Uploaded filenames and Cloudinary public identifiers are sanitized to reduce the risk of unsafe path or identifier manipulation.
+
+## Cleanup
+
+The backend includes cleanup handling for uploaded files when a request fails after an upload has already occurred.
+
+Cleanup errors are handled without hiding the original application error.
+
+---
+
+# 13. Rich Text Sanitization
+
+Rich-text input is sanitized server-side using:
+
+```text
+sanitize-html
+```
+
+The helper is located in:
+
+```text
+src/utils/sanitize.ts
+```
+
+The primary helper is:
+
+```text
+sanitizeRichText
+```
+
+The sanitizer is used by the relevant services before rich-text content is persisted.
+
+The implementation allows a controlled set of HTML elements and removes dangerous HTML content.
+
+The exact allowed tags and attributes are defined by the sanitizer configuration in the source code and should be treated as the authoritative configuration.
+
+Dangerous executable content such as scripts and JavaScript-based URLs is removed according to the sanitizer configuration.
+
+### Important
+
+This is server-side HTML sanitization.
+
+It is not a Tiptap implementation.
+
+It is not a JSON editor migration.
+
+Existing database records were not automatically rewritten as part of the sanitization change.
+
+---
+
+# 14. Error Handling
+
+The backend uses centralized error handling.
+
+Important files include:
+
+```text
+src/middlewares/globalError.ts
+src/middlewares/notFound.ts
+src/errorHelper/error.ts
+```
+
+## Global Error Middleware
+
+The global error middleware:
+
+- processes application errors
+- converts known errors into appropriate HTTP responses
+- handles validation errors
+- handles authentication errors
+- handles database-related errors
+- performs uploaded-file cleanup where required
+- avoids exposing unnecessary internal details in production responses
+
+Production responses should not expose internal stack traces or sensitive implementation information.
+
+---
+
+# 15. Response Format
+
+The project uses a standardized response utility.
+
+The response helper is located at:
+
+```text
+src/utils/response.ts
+```
+
+The response structure supports fields such as:
+
+```text
+statusCode
+success
+message
+data
+meta
+```
+
+A typical response follows this general structure:
+
+```json
 {
-  id: number,          // Database user ID
-  email: string,       // User's email
-  role: 'OWNER' | 'MANAGER'
+  "statusCode": 200,
+  "success": true,
+  "message": "Request successful",
+  "data": {},
+  "meta": {}
 }
 ```
 
-**Cookie Configuration (`src/utils/setCookies.ts`):**
-- `httpOnly: true` – prevents client‑side JavaScript access.
-- `secure: true` – only sent over HTTPS.
-- `sameSite: 'none'` – allows cross‑site requests (required for many frontend deployments).
-- Both `accessToken` and `refreshToken` stored as cookies.
+The exact fields included depend on the endpoint.
 
-### Authentication Flow
+---
 
-1. **Login (`POST /api/v1/auth/login`):**
-   - Credentials (`email`, `password`) validated in `authServices.ownerLogin`.
-   - If valid, `createUserTokens` generates access & refresh tokens.
-   - `setAuthCookies` sets secure, HTTP‑only cookies.
-   - Returns owner details in response body (status 200).
+# 16. Environment Configuration
 
-2. **Token Refresh (`POST /api/v1/auth/generate-token`):**
-   - Extracts `refreshToken` from cookie.
-   - If refresh token is still valid, generates a new access token (using same user payload).
-   - Overwrites existing cookies with new tokens.
+Environment configuration is validated during application startup.
 
-3. **Logout (`POST /api/v1/auth/logout`):**
-   - Clears both `accessToken` and `refreshToken` cookies (same options as set).
+Sensitive values must remain outside source control.
 
-### Authorization Middleware (`src/middlewares/authCheck.ts`)
+Important configuration categories include:
 
-**Core Steps:**
-- Extract token from `Authorization` header or `accessToken` cookie.
-- Verify token using `verifyJwtToken` with `JWT_ACCESS_SECRET`.
-- Query `prisma.user.findUnique` by `email` from payload.
-- Validate user status:
-  - Must exist.
-  - `isActive` must be `ACTIVE` (not `BLOCKED` or `INACTIVE`).
-  - `isVerified` must be `true`.
-- Check role: middleware accepts a list of allowed roles (`...authRole`). Owner routes typically require `OWNER`.
-- Attach `req.user` (the verified payload) for downstream controllers.
+```text
+PORT
+DATABASE_URL
+FRONTEND_URL
 
-**Error Responses:**
-- Missing/invalid token → `401 Unauthorized`.
-- User not found → `404 Not Found`.
-- User blocked/inactive/unverified → `401 Unauthorized`.
-## 9. User and Owner Access Model
+JWT access configuration
+JWT refresh configuration
 
-The application defines a **single owner/admin user** (seeded at first run) who holds all administrative privileges. The `User` Prisma model includes a `role` field (`OWNER` or `MANAGER`), but only the seeded owner typically has the `OWNER` role. The `isActive` enum (`ACTIVE`, `INACTIVE`, `BLOCKED`) and `isVerified` boolean control user activation.
+Cloudinary configuration
 
-### User Model (`src/prisma/schema.prisma`)
-
-```prisma
-model User {
-  id            Int     @id @default(autoincrement())
-  name          String
-  email         String   @unique
-  password      String
-  avater        String   @default("https://cdn-icons-png.flaticon.com/512/9385/9385289.png")
-  skills        String[]
-  address       String   @db.VarChar(150)
-  phone         String
-  isActive      IsActive  @default(ACTIVE)
-  role          Role      @default(OWNER)
-  isVerified    Boolean   @default(true)
-  github        String
-  linkedin      String
-  twitter       String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now())
-  Blog          Blog[]
-  Project       Project[]
-  WorkExperince WorkExperince[]
-}
+Owner configuration
 ```
 
-### Roles
+The repository contains an example environment file for documenting required configuration.
 
-- **OWNER** – Super‑user with full CRUD rights across all resources. The seeded owner has this role.
-- **MANAGER** – May exist in the future; currently unused.
+Actual secret values must never be placed in:
 
-### Access Control Summary
+- source code
+- README files
+- documentation
+- committed `.env` files
+- Docker images
+- Git history
 
-| Resource | Publicly Accessible Endpoints | Owner Required | Manager Required |
-|----------|------------------------------|----------------|------------------|
-| Users    | `GET /api/v1/users/getme` (requires Owner) | Yes | No |
-| Projects | `GET /api/v1/projects/all` (public) | Yes (`POST /create`, `PATCH /edit/:id`, `DELETE /:id`) | No |
-| Work Experience | `GET /api/v1/work-experience/all` (public) | Yes (`POST /create`, `PATCH /edit/:id`, `DELETE /:id`) | No |
-## 10. Database Schema
-## 11. API Performance and Testing Audit
-## 12. Security and API Audit
-## 13. Project Analysis and Monitoring
-## 14. Database Optimization Recommendations
-## 15. Code Quality and Maintainability Practices
-
-The codebase adheres to a consistent quality pipeline to ensure reliability, readability, and maintainability.
-
-### Linting & Formatting
-- **ESLint** – Configured with `@eslint/js` and `@typescript-eslint` rules; enforces uniform import ordering, variable naming, and hook usage.
-- **Prettier** – Enforces 2‑space indentation, line breaks after commas, and standard quote styles.
-- **Commit Message Conventions** – Adopted conventional commits (feat, fix, refactor, chore, etc.) to improve traceability.
-
-### Testing Discipline
-- **Unit Tests** – Every public function is covered by at least one test; mock external services (Cloudinary, JWT) using `jest.mock`.
-- **Integration Tests** – Full‑stack tests using `supertest` and a Docker‑Compose environment; run as part of CI.
-- **End‑to‑End Tests** – Cypress suite validates critical user journeys (login → create project → update blog).
-
-### Code Reviews
-- Pull‑request template mandates:
-  - Description of changes and rationale.
-  - Updated `CHANGELOG.md` entry.
-  - Reference to related issue/ticket.
-  - At least one peer reviewer approval.
-- **Automated Gate** – CI fails on failing linters, test failures, or code‑coverage drop below 85 %.
-
-### Documentation Standards
-- **README** – Provides quick‑start instructions, environment variables, and API overview.
-- **Architecture Decision Records (ADRs)** – Stored in `docs/adr/`; each ADR captures context, decision, and consequences.
-- **API Specification** – OpenAPI 3.0 spec generated from route annotations; used for contract testing.
-
-### Refactoring Opportunities
-- **Duplicate Logic** – Recent refactoring merged repeated validation logic into shared utility functions (`src/utils/validate.ts`).
-- **Type Safety** – Expand `unknown` union types in `src/`; introduce stricter discriminated unions for request DTOs.
-- **Deprecation** – Legacy endpoints (e.g., deprecated `/api/v1/auth/login` for non‑owner) flagged with `@deprecated` JSDoc and removed in a future release.
+Because an environment file containing credentials had previously been committed during the project's history, previously exposed credentials should be considered compromised and rotated where applicable.
 
 ---
 
-The current Prisma schema and underlying PostgreSQL configuration are suitable for moderate workloads. The following optimizations are recommended for production scaling.
+# 17. Security Improvements
 
-### Indexing
-- **Composite Indexes** – Add index on `User(email)` (already present) and `Blog(slug)` (already present). Consider a composite index on `Project(userId, createdAt)` to accelerate listing by owner.
-- **Partial Indexes** – For frequently filtered queries (e.g., `WHERE isActive = true`), create partial indexes to reduce scan volume.
+The backend received several security-focused improvements.
 
-### Query Optimization
-- **Selective Columns** – Avoid `SELECT *`; specify only required columns in queries (especially for list endpoints).
-- **Pagination** – Implement cursor‑based pagination for `Projects`, `WorkExperience`, and `Blogs` to limit result sets.
-- **Batch Operations** – Use `bulk` operations for bulk imports (e.g., seeding many work experiences) to minimize round trips.
+## Environment Security
 
-### Connection Pooling
-- **Prisma Client** – Configure `maxConnections` to match the expected concurrency (e.g., 20–30). Adjust `poolSize` in `prisma.config.js` accordingly.
-- **Connection Retry** – Enable automatic retries with exponential backoff for transient database errors.
+- Environment configuration is validated.
+- Secrets are not hardcoded into source files.
+- Environment files are excluded through Git ignore rules.
 
-### Caching
-- **Redis** – Cache frequent read‑only data (e.g., user profiles, project lists) with TTL of 5–10 minutes.
-- **Cache Invalidation** – Invalidate cache on successful updates via Redis pub/sub events triggered by Prisma mutations.
+## JWT Security
 
-### Migration Strategy
-- **Zero‑Downtime Migrations** – Use `prisma migrate` with `--rollback` strategy; implement feature flags for breaking changes.
-- **Data Archiving** – Periodically archive old blog posts older than 2 years to reduce table size.
+- JWT signing uses explicit configuration.
+- Access and refresh tokens use separate configuration.
+- Authentication uses HTTP-only cookies.
+- Authentication token extraction was restricted to the configured cookie mechanism.
+- Sensitive authentication logging was removed.
 
----
+## Cookie Security
 
-The application is instrumented with centralized logging, metrics collection, and health‑check endpoints to facilitate observability and rapid incident response.
+Authentication cookies use:
 
-### Metrics Collection
-- **Prometheus** – Exposed via `/metrics` (standard `prom-client` registry) exposing:
-  - `http_requests_total{method,route,status}`
-  - `db_query_duration_seconds` (average per model)
-  - `queue_depth` (for background job queues, if any)
-- **Custom Dashboards** – Grafana dashboards visualize request latency, error rates, and active user sessions.
-
-### Logging Strategy
-- **Structured Logging** – All log entries are emitted as JSON with fields: `timestamp`, `level`, `service`, `traceId`, `spanId`, `message`, `context`.
-- **Centralized Aggregation** – Logs are shipped to Elasticsearch (via Fluent Bit) and visualized in Kibana.
-- **Audit Trail** – Every authentication event, file upload, and sensitive data modification is recorded with immutable trace IDs.
-
-### Health Checks
-- **Liveness Probe** – `/health/live` reports process status (no deadlock).
-- **Readiness Probe** – `/health/ready` verifies database connectivity, Cloudinary endpoint availability, and cache warm‑up.
-- **Circuit Breaker** – External dependencies (Cloudinary, third‑party APIs) are wrapped with circuit‑breaker logic to prevent cascade failures.
-
-### Alerting Rules
-- **High Latency** – > 500 ms p95 for any endpoint triggers an alert.
-- **Error Spike** – > 5 % 5xx errors in a 5‑minute window triggers a page.
-- **Resource Exhaustion** – CPU > 80 % or memory > 85 % for > 10 minutes alerts the ops team.
-
----
-
-The backend implements defense‑in‑depth measures to protect data integrity and confidentiality.
-
-### Authentication Security
-- **JWT** – Signed with HMAC‑SHA‑256 (`JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`). Secret rotation is not automated; manual rotation is required.
-- **Password Hashing** – Bcrypt with cost factor 12 (default).
-- **Token Storage** – Access tokens stored in HttpOnly, Secure, SameSite‑None cookies; refresh tokens also HttpOnly.
-- **Rate Limiting** – Not yet enforced globally; consider implementing per‑IP/IP‑range limits on `/auth/*` endpoints.
-
-### Authorization Review
-- **Role Enforcement** – `authCheck` middleware validates `role` field; only `OWNER` role can create/modify projects, work‑experience, and blogs.
-- **Least Privilege** – `MANAGER` role is defined but not utilized; future extension could grant limited project‑level permissions.
-- **Session Management** – No token blacklist; compromised refresh tokens remain valid until expiry.
-
-### Input Validation & Sanitization
-- **Zod Schemas** – All request bodies (e.g., `ProjectCreateSchema`, `BlogCreateSchema`) are validated before reaching controllers.
-- **File Upload** – Multer restricts MIME types (`image/jpeg`, `image/png`, `image/webp`) and enforces size limits (e.g., 5 MB). Images are stored in Cloudinary with signed URLs.
-- **SQL Injection** – Prisma ORM abstracts SQL; no raw queries are exposed.
-
-### API Auditing
-- **Health Endpoint** – `/health` confirms database connectivity and external service reachability (Cloudinary).
-- **Error Messages** – Generic error responses hide stack traces in production; detailed logs are written to stdout (captured by Docker container).
-- **Logging** – Structured JSON logs include timestamp, request ID, endpoint, status, and user ID (when authenticated).
-
-### Vulnerability Scanning
-- **Static Analysis** – ESLint + SonarQube configured; recent scans reported no high‑severity issues.
-- **Dependency Check** – `npm audit` passes with no critical findings; outdated packages are periodically reviewed.
-- **Container Security** – Docker image built with non‑root user (`USER_ID=1000`), minimal base image (`node:20-alpine`), and read‑only root filesystem.
-
----
-
-The API is designed for high‑throughput scenarios with rate limiting, caching, and asynchronous processing where applicable.
-
-### Performance Benchmarks (observed in staging)
-- **Average latency** for a typical CRUD operation: ~45 ms (p95).
-- **Concurrent connections** handled: up to 2 000 simultaneous HTTP requests.
-- **Database query optimization** – Prisma queries are indexed on `email`, `slug`, and `authorId`; composite indexes on `(authorId, createdAt)` improve list queries.
-
-### Testing Audit
-
-| Layer | Tool | Coverage Target | Current Status |
-|-------|------|-----------------|----------------|
-| Unit Tests | Jest (built‑in) | 85 % of business logic | ✅ Passing (≥ 90 % line coverage) |
-| Integration Tests | Supertest + Docker Compose | End‑to‑end API flows | ✅ Passing (core CRUD, auth, file upload) |
-| Contract Tests | Pact (optional) | API contract with frontend | ⏳ Not implemented |
-| Load Testing | k6 (simulated traffic) | 10 k RPM sustained load | ⏳ Planned |
-
-**Recommendations**
-- Increase unit test coverage for edge cases (e.g., duplicate skill handling, malformed file uploads).
-- Add integration tests for the `globalError` middleware and cleanup logic.
-- Implement contract testing against the OpenAPI spec.
-
----
-
-The database schema is defined in `prisma/schema.prisma` and consists of four models with relationships, indexes, and enums. The schema is designed for a portfolio application with a single owner/admin user who manages projects, work experiences, and blog posts.
-
-### Models
-
-#### User
-
-```prisma
-model User {
-  id            Int     @id @default(autoincrement())
-  name          String
-  email         String   @unique
-  password      String
-  avater        String   @default("https://cdn-icons-png.flaticon.com/512/9385/9385289.png")
-  skills        String[]
-  address       String   @db.VarChar(150)
-  phone         String
-  isActive      IsActive  @default(ACTIVE)
-  role          Role      @default(OWNER)
-  isVerified    Boolean   @default(true)
-  github        String
-  linkedin      String
-  twitter       String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now())
-  Blog          Blog[]
-  Project       Project[]
-  WorkExperince WorkExperince[]
-}
+```text
+httpOnly
+secure
+SameSite
 ```
 
-#### Blog
+configuration appropriate for the application's cross-origin frontend setup.
 
-```prisma
-model Blog {
-  id            Int      @id @default(autoincrement())
-  title         String   @db.VarChar(255)
-  content       Json?
-  images        String[] @default(["https://placehold.co/800x450/eee/555?font=playfair-display&text=No+Thumbnail+Yet"])
-  published     Boolean  @default(false)
-  publishedDate DateTime @default(now())
-  slug          String   @unique
-  views         Int      @default(0)
-  authorId      Int
-  author        User     @relation(fields: [authorId], references: [id])
-  tags          String[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
+## Error Security
+
+Production error responses avoid exposing sensitive internal information.
+
+## Upload Security
+
+- MIME restrictions.
+- File size restrictions.
+- File count restrictions.
+- Filename/public ID sanitization.
+- Cloudinary upload handling.
+- Uploaded-file cleanup.
+
+## Rich Text Security
+
+Rich-text content is sanitized server-side using `sanitize-html`.
+
+## Express Security
+
+The application disables:
+
+```text
+x-powered-by
 ```
 
-#### Project
+to avoid unnecessarily exposing the Express technology signature.
 
-```prisma
-model Project {
-  id          Int      @id @default(autoincrement())
-  title       String   @db.VarChar(255)
-  description String   @db.VarChar(500)
-  image       String
-  techStack   String[]
-  liveUrl     String
-  githubUrl   String
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
+## CORS
+
+CORS is configured using the frontend origin configuration.
+
+---
+
+# 18. Testing
+
+The project uses Bun's native test runner.
+
+Current test files:
+
+```text
+tests/configs/envVars.test.ts
+tests/configs/multerConfig.test.ts
+tests/middlewares/authCheck.test.ts
+tests/utils/jwt.test.ts
+tests/utils/sanitize.test.ts
 ```
 
-#### WorkExperince
+The test suite covers areas including:
 
-```prisma
-model WorkExperince {
-  id          Int      @id @default(autoincrement())
-  companyName String
-  role        String   @db.VarChar(80)
-  descripion  String   // Note: Typo in field name
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id])
-  startDate   DateTime
-  endDate     DateTime
-}
+- environment validation
+- upload configuration
+- authentication middleware
+- JWT behavior
+- HTML sanitization
+
+The existing test infrastructure does not claim:
+
+- Jest
+- Supertest
+- Cypress
+- Docker Compose integration testing
+- E2E testing
+- CI coverage thresholds
+
+Coverage percentages are not documented because no verified coverage target is part of the current implementation.
+
+---
+
+# 19. Production Readiness
+
+Production-readiness improvements include:
+
+- environment validation
+- hardened JWT configuration
+- secure authentication cookies
+- restricted token extraction
+- upload restrictions
+- uploaded-file cleanup
+- rich-text sanitization
+- centralized error handling
+- Express `x-powered-by` disabled
+- health endpoint
+- graceful shutdown
+- production error protection
+- Docker production configuration
+- non-root container execution
+
+The project should still be treated as an actively maintained application rather than a fully instrumented enterprise platform.
+
+---
+
+# 20. Docker
+
+The backend includes a production-oriented multi-stage Dockerfile.
+
+The Docker configuration uses:
+
+```text
+oven/bun:1.2.15
 ```
 
-### Enums
+The Docker build separates build dependencies from the final runtime image.
 
-```prisma
-enum IsActive {
-  ACTIVE
-  INACTIVE
-  BLOCKED
-}
+The final image runs the application using a non-root user.
 
-enum Role {
-  MANAGER
-  OWNER
-}
+A container health check is included.
+
+The `.dockerignore` prevents unnecessary development and sensitive files from being included in the Docker build context.
+
+Environment files and repository metadata should not be copied into the production image.
+
+---
+
+# 21. Deployment
+
+The repository contains deployment configuration including:
+
+```text
+Dockerfile
+vercel.json
 ```
 
-### Key Features
+The backend can be containerized using the provided Docker configuration.
 
-- **Relationships:**
-  - `User` has one‑to‑many relationships with `Blog`, `Project`, and `WorkExperince`.
-  - All models have `createdAt` and `updatedAt` timestamps.
-- **Indexes:**
-  - `email` on `User` (unique).
-  - `slug` on `Blog` (unique).
-- **Default Values:**
-  - `User.avater` and `Blog.images` have default placeholder URLs.
-  - `User.isActive` defaults to `ACTIVE`.
-  - `User.role` defaults to `OWNER`.
-  - `User.isVerified` defaults to `true`.
-- **Typo Note:** `WorkExperince.descripion` is misspelled (should be `description`).
+Environment variables must be configured separately in the deployment environment.
 
-### Migration History
+Production deployment should verify:
 
-- **Initial Migration (`20251011171933_new`):** Created all models with basic fields.
-- **Rich Text Migration (`20260428162232_richtext`):** Changed `Blog.content` from `TEXT` to `Json` and dropped the `TEXT` column.
+- database connectivity
+- required environment variables
+- Cloudinary configuration
+- frontend origin
+- JWT configuration
+- health endpoint
+- authentication cookies
+- upload behavior
 
 ---
-| Blogs    | `GET /api/v1/blogs/all`, `GET /api/v1/blogs/:slug` (public) | Yes (`POST /create`, `PATCH /publish`, `PATCH /unpublish`, `PATCH /update`, `DELETE`) | No |
 
-**Notes:**
-- All CRUD operations for resources (projects, work‑experience, blogs) require the `OWNER` role (via `authCheck` middleware).
-- `GET /api/v1/users/getme` requires authentication and validates the owner’s role.
-- The `authCheck` middleware is applied to routes that need either `OWNER` or `MANAGER`; currently only `OWNER` is used.
-- No public creation/updates exist; publishing/unpublishing blogs is owner‑only.
+# 22. Complete Improvement History
 
----
-- Insufficient role → `401 Unauthorized`.
+The backend improvement work was divided into a sequence of focused prompts.
 
-### Security Hardening (from improvement history)
-- JWT algorithm: `HS256` (configurable via `jsonwebtoken`).
-- Tokens are short‑lived for access, longer for refresh.
-- Cookies are secure, HTTP‑only, SameSite=None.
-- Sensitive error messages (e.g., exact failure reasons) are sanitized in production.
-- `globalError` middleware cleans up uploaded files on authentication failures.
-- Environment variables are validated on startup (no hardcoded secrets).
+## Prompt 01
 
-### Session Management Limitations
-- No token revocation list; a compromised refresh token remains valid until expiration.
-- No logout invalidation on server side other than cookie removal.
+**Status:** IMPLEMENTED
 
----
-- Protected routes enforce either `OWNER` or `MANAGER` depending on controller/service logic (mostly `OWNER`).
+**Commit:**
 
-**Validation Architecture:**
-- Zod schemas are imported in route files and applied via `requestValidator` middleware.
-- For file uploads, validation occurs after `multerUpload` middleware, ensuring file type and size constraints.
-
----
-    ↓
-SIGINT/SIGTERM → gracefulShutdown
+```text
+0f8a2ba
+feat: Secure environment by adding .env.dev to .gitignore and creating .env.example
 ```
 
-**Note:** The `seedOwner` behavior is only active when `NODE_ENV` is `development`.
+Main purpose:
+
+- Improve environment-file handling.
+- Prevent environment files from being tracked.
+- Create an example environment configuration.
+
+Important security note:
+
+Previously exposed environment credentials should be rotated.
 
 ---
-- `user.services.ts` (plural) vs `auth.service.ts` (singular) – inconsistency across modules.
-- `User` vs `Owner` terminology – the application treats the single seeded user as both `User` and `Owner`.
+
+## Prompt 02
+
+**Status:** IMPLEMENTED
+
+**Commit:**
+
+```text
+7844ca1
+refactor: validate environment configuration
+```
+
+Main purpose:
+
+- Validate environment configuration.
+- Fail early when required configuration is missing or invalid.
 
 ---
-**Error Handling Flow:**
-- Uncaught exceptions → `globalError` middleware (processes error via `processRawError`, cleans up uploaded files, logs 5xx errors, returns standardized JSON).
-- Validation errors (Zod) → `requestValidator` forwards to `globalError`.
-- Authentication failures → `authCheck` throws `AppError` (401/404) caught by `globalError`.
-- Database errors (Prisma) → caught by `processRawError` and transformed to appropriate HTTP status codes.
+
+## Prompt 03
+
+**Status:** DEFERRED
+
+The naming cleanup was intentionally not completed.
+
+The repository contains naming inconsistencies such as:
+
+```text
+asyncFync
+sendResonse
+WorkExperince
+descreption
+blog.schmea.ts
+user.services.ts
+```
+
+These were left unchanged to avoid unnecessary compatibility risks.
 
 ---
-| **JWT (jsonwebtoken)** | Token‑based authentication (v9.0.2) with access and refresh tokens. |
-| **bcrypt** | Password hashing for the owner account. |
-| **cookie‑parser** | Parses cookies from incoming requests. |
-| **cors** | Allows requests from the frontend origin defined by `FRONTEND_URL`. |
-| **compression** | Gzip middleware for response bodies. |
-| **sanitize‑html** | Server‑side HTML sanitization for rich‑text fields (blogs, projects, work experience). |
-| **http‑status‑codes** | Constants for HTTP status codes (used throughout error handling). |
-| **Docker** | Multi‑stage Dockerfile with non‑root user and health checks. |
-| **Vercel** | Deployment platform (configuration in `vercel.json`). |
-| **Bun Test** | Built‑in test runner (used for unit/integration tests). |
 
-All technologies are pinned in `package.json`; no optional or unverified dependencies are documented.
+## Prompt 04
+
+**Status:** IMPLEMENTED
+
+**Commit:**
+
+```text
+17aa602
+security: harden authentication and authorization
+```
+
+Main improvements:
+
+- Explicit JWT algorithm handling.
+- Reduced sensitive authentication logging.
+- Restricted token extraction.
+- Improved authentication error handling.
+- Improved production error protection.
 
 ---
+
+## Prompt 05
+
+**Status:** IMPLEMENTED
+
+**Commit:**
+
+```text
+a374c23
+security: harden file uploads
+```
+
+Main improvements:
+
+- MIME type restrictions.
+- 10 MB file-size limit.
+- Maximum 10 files per request.
+- Filename/public ID sanitization.
+- Upload cleanup behavior.
+- Safer Cloudinary handling.
+
+---
+
+## Prompt 06
+
+**Status:** IMPLEMENTED
+
+**Commit:**
+
+```text
+6e730b6
+security: sanitize rich text content
+```
+
+Main improvements:
+
+- Added `sanitize-html`.
+- Added server-side rich-text sanitization.
+- Sanitized relevant blog, project, and work-experience content.
+- Removed dangerous executable HTML content.
+
+No database migration was performed for this change.
+
+---
+
+## Prompt 07
+
+**Status:** ANALYSIS ONLY
+
+The database and query optimization work was analyzed.
+
+No implementation changes were committed as part of this prompt.
+
+---
+
+## Prompt 08
+
+**Status:** IMPLEMENTED
+
+**Commit:**
+
+```text
+efc734f
+test: add backend testing infrastructure
+```
+
+Main improvements:
+
+- Added Bun native test infrastructure.
+- Added tests for environment validation.
+- Added upload configuration tests.
+- Added authentication middleware tests.
+- Added JWT tests.
+- Added sanitizer tests.
+
+---
+
+## Prompt 09
+
+**Status:** IMPLEMENTED
+
+**Commit:**
+
+```text
+5d5ff61
+feat: improve production readiness
+```
+
+Main improvements:
+
+- Added health endpoint.
+- Disabled Express `x-powered-by`.
+- Improved production error handling.
+- Added graceful shutdown.
+- Improved seed failure behavior.
+
+---
+
+## Prompt 10
+
+**Status:** IMPLEMENTED
+
+**Commit:**
+
+```text
+10f43d3
+feat: improve Docker production configuration
+```
+
+Main improvements:
+
+- Multi-stage Docker build.
+- Production-oriented Bun image.
+- Non-root runtime user.
+- Improved Docker caching.
+- Health check.
+- Reduced production image contents.
+
+---
+
+## Prompt 11
+
+**Status:** IMPLEMENTED
+
+**Commit:**
+
+```text
+2b1ffb3
+docs: improve backend documentation
+```
+
+Main improvements:
+
+- Expanded README.
+- Documented architecture.
+- Documented environment configuration.
+- Documented API structure.
+- Documented authentication.
+- Documented uploads.
+- Documented sanitization.
+- Documented testing.
+- Documented Docker and deployment.
+- Documented security considerations.
+
+---
+
+## Prompt 12
+
+**Status:** REVIEW ONLY
+
+Prompt 12 performed the final integration, security, Docker, Git, and implementation review.
+
+No implementation commit was created by Prompt 12.
+
+The final implementation remained at:
+
+```text
+2b1ffb3
+```
+
+---
+
+# 23. Current Technical Debt
+
+The current repository contains several known technical-debt areas.
+
+## Naming Inconsistencies
+
+Examples:
+
+```text
+asyncFync.ts
+sendResonse
+WorkExperince
+descreption
+blog.schmea.ts
+user.services.ts
+```
+
+These should not be renamed casually.
+
+A future naming cleanup should consider:
+
+- imports
+- Prisma model names
+- database compatibility
+- API contracts
+- frontend dependencies
+
+## Authentication Expansion
+
+The current system does not implement:
+
+- token blacklist
+- refresh-token revocation storage
+- session management
+- automated secret rotation
+- global rate limiting
+
+## Testing Expansion
+
+Additional testing could include:
+
+- integration testing
+- endpoint-level testing
+- upload failure scenarios
+- database interaction testing
+- end-to-end testing
+
+These are future improvements, not current implementation claims.
+
+---
+
+# 24. Intentionally Deferred / Unchanged Work
+
+The following areas were intentionally not changed during the current improvement cycle:
+
+### Naming Cleanup
+
+Deferred because renaming internal identifiers can introduce unnecessary compatibility risks.
+
+### Database Optimization
+
+Analyzed but not implemented as part of Prompt 07.
+
+### Database Migration History
+
+No historical migration claims are made without verified migration files.
+
+### Rich-Text Database Migration
+
+No database migration was performed for the sanitization work.
+
+### Enterprise Observability
+
+No Prometheus, Grafana, Elasticsearch, centralized logging, or alerting system was added.
+
+### Automated CI/CD Security
+
+No unsupported CI security or coverage system is claimed.
+
+---
+
+# 25. Future Improvements
+
+The following are recommendations only.
+
+## Testing
+
+Potential future work:
+
+- Add integration tests.
+- Add endpoint-level tests.
+- Add end-to-end tests.
+- Expand edge-case coverage.
+- Add database-backed testing where appropriate.
+
+## Authentication
+
+Potential future work:
+
+- Refresh-token revocation.
+- Token/session management.
+- Rate limiting on authentication endpoints.
+- Automated secret rotation.
+- Additional authentication monitoring.
+
+## Database
+
+Potential future work:
+
+- Review query patterns.
+- Add indexes only where supported by actual query usage.
+- Introduce pagination where datasets require it.
+- Review Prisma connection configuration for deployment scale.
+- Introduce migrations when a migration workflow is formally adopted.
+
+## Performance
+
+Potential future work:
+
+- Pagination.
+- Query optimization.
+- Selective field retrieval.
+- Appropriate database indexing.
+- Caching for frequently accessed read-only data.
+- Cloudinary image transformations.
+- Retry handling for appropriate transient failures.
+
+## API Documentation
+
+Potential future work:
+
+- OpenAPI specification.
+- Generated API reference.
+- Frontend/backend contract testing.
+
+## Observability
+
+Potential future work:
+
+- Structured logging.
+- Request identifiers.
+- Metrics.
+- Monitoring dashboards.
+- Alerting.
+
+These capabilities are not currently claimed as implemented.
+
+---
+
+# 26. Developer Onboarding
+
+A new developer should follow this sequence.
+
+## Step 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd myPortfolio-backend
+```
+
+## Step 2. Install Dependencies
+
+Using Bun:
+
+```bash
+bun install
+```
+
+## Step 3. Configure Environment
+
+Create the required local environment file using `.env.example` as the reference.
+
+Never commit actual credentials.
+
+## Step 4. Verify Database Configuration
+
+Ensure:
+
+```text
+DATABASE_URL
+```
+
+points to the intended PostgreSQL database.
+
+## Step 5. Start Development Server
+
+Use the project's configured development script:
+
+```bash
+bun run dev
+```
+
+## Step 6. Run Tests
+
+```bash
+bun test
+```
+
+## Step 7. Run Build
+
+```bash
+bun run build
+```
+
+## Step 8. Run Lint
+
+```bash
+bun run lint
+```
+
+## Step 9. Check Health Endpoint
+
+```text
+GET /health
+```
+
+The endpoint should confirm database connectivity.
+
+---
+
+# 27. Development Workflow
+
+Before changing backend functionality:
+
+1. Read the relevant route.
+2. Read the controller.
+3. Read the service.
+4. Read the validation schema.
+5. Check the Prisma model.
+6. Check frontend usage if the API contract is affected.
+7. Make the smallest appropriate change.
+8. Run tests.
+9. Run build.
+10. Run lint.
+11. Review the Git diff.
+12. Commit the focused change.
+
+Avoid unrelated refactoring during feature work.
+
+---
+
+# 28. Troubleshooting
+
+## Environment Validation Error
+
+Check:
+
+```text
+.env
+.env.example
+src/configs/envVars.ts
+```
+
+Make sure all required variables exist and use valid values.
+
+## Database Connection Error
+
+Check:
+
+```text
+DATABASE_URL
+```
+
+Then verify PostgreSQL is running and reachable.
+
+## Authentication Failure
+
+Check:
+
+- access token cookie
+- refresh token cookie
+- JWT configuration
+- user status
+- user verification status
+- required role
+- frontend CORS configuration
+
+## Upload Failure
+
+Check:
+
+- MIME type
+- file size
+- number of files
+- Cloudinary credentials
+- Cloudinary configuration
+- multipart field name
+
+For example:
+
+```text
+file
+```
+
+or:
+
+```text
+files
+```
+
+depending on the endpoint.
+
+## Validation Failure
+
+Check the relevant Zod schema and the shape of the request body.
+
+For multipart requests, remember that uploaded-file handling and body parsing can affect how request data reaches validation.
+
+## Docker Failure
+
+Check:
+
+```text
+Dockerfile
+.dockerignore
+environment variables
+database connectivity
+health endpoint
+```
+
+Build the image and inspect the container logs.
+
+---
+
+# 29. Frontend/Backend Compatibility
+
+The frontend depends on the backend API contracts.
+
+Before changing any of the following, inspect frontend usage:
+
+- endpoint paths
+- request field names
+- response field names
+- authentication cookies
+- image upload field names
+- database-backed public fields
+- rich-text content format
+
+Particular care is required around existing names such as:
+
+```text
+descreption
+WorkExperince
+```
+
+Changing these names without a coordinated frontend and database change can break the application.
+
+The backend should therefore preserve existing API contracts unless a deliberate migration is planned.
+
+---
+
+# 30. Security Maintenance Checklist
+
+Before production deployment:
+
+```text
+[ ] Environment variables configured securely
+[ ] No secrets committed to Git
+[ ] Previously exposed credentials rotated
+[ ] DATABASE_URL verified
+[ ] JWT secrets configured securely
+[ ] FRONTEND_URL configured correctly
+[ ] Cloudinary credentials configured
+[ ] Authentication cookies configured correctly
+[ ] Upload MIME restrictions verified
+[ ] Upload size limit verified
+[ ] Upload count limit verified
+[ ] Rich-text sanitization enabled
+[ ] Production error responses do not expose stack traces
+[ ] CORS configuration reviewed
+[ ] Health endpoint verified
+[ ] Docker image reviewed
+[ ] Application runs as non-root inside Docker
+[ ] Tests pass
+[ ] Build passes
+[ ] Lint passes
+```
+
+---
+
+# 31. Final Architecture Summary
+
+The current backend can be summarized as:
+
+```text
+                    ┌──────────────────────┐
+                    │      Frontend        │
+                    └──────────┬───────────┘
+                               │
+                               v
+                    ┌──────────────────────┐
+                    │       Express        │
+                    │       app.ts         │
+                    └──────────┬───────────┘
+                               │
+             ┌─────────────────┼─────────────────┐
+             │                 │                 │
+             v                 v                 v
+        Middleware          Routes           Health
+             │                 │
+             │                 v
+             │          Module Routers
+             │                 │
+             │                 v
+             │            Controllers
+             │                 │
+             │                 v
+             │             Services
+             │                 │
+             │                 v
+             │              Prisma
+             │                 │
+             │                 v
+             │            PostgreSQL
+             │
+             ├──── Authentication
+             │       JWT + Cookies
+             │
+             ├──── Validation
+             │       Zod
+             │
+             ├──── File Upload
+             │       Multer + Cloudinary
+             │
+             └──── Sanitization
+                     sanitize-html
+```
+
+The backend is structured around Express modules with separate routes, controllers, services, validation, middleware, and utilities.
+
+Authentication is JWT-based and cookie-based.
+
+PostgreSQL is accessed through Prisma.
+
+Images are stored through Cloudinary.
+
+Rich-text input is sanitized server-side.
+
+Errors are processed through centralized middleware.
+
+The application includes a health endpoint and graceful shutdown handling.
+
+The repository also contains a Bun-based test suite covering important security and utility functionality.
+
+The most important maintenance principle is to preserve existing API and database contracts unless a deliberate migration is planned. Existing naming inconsistencies should therefore be treated as technical debt rather than casually renamed.
+
+---
+
+# Appendix A. Important Existing Naming
+
+The following names are intentionally documented exactly as they currently exist:
+
+```text
+WorkExperince
+descreption
+asyncFync
+sendResonse
+blog.schmea.ts
+user.services.ts
+```
+
+Do not correct these names casually.
+
+Any future rename should include:
+
+1. Source-code reference review.
+2. Prisma/database compatibility review.
+3. API compatibility review.
+4. Frontend compatibility review.
+5. Tests.
+6. Migration planning where required.
+
+---
+
+# Appendix B. Current Improvement Commit History
+
+```text
+0f8a2ba  feat: Secure environment by adding .env.dev to .gitignore and creating .env.example
+7844ca1  refactor: validate environment configuration
+17aa602  security: harden authentication and authorization
+a374c23  security: harden file uploads
+6e730b6  security: sanitize rich text content
+efc734f  test: add backend testing infrastructure
+5d5ff61  feat: improve production readiness
+10f43d3  feat: improve Docker production configuration
+2b1ffb3  docs: improve backend documentation
+```
+
+Additional workflow states:
+
+```text
+Prompt 03  DEFERRED
+Prompt 07  ANALYSIS ONLY
+Prompt 12  REVIEW ONLY
+```
+
+---
+
+# Appendix C. Documentation Reliability Rule
+
+This document intentionally avoids claiming infrastructure, metrics, tests, migrations, monitoring systems, or performance measurements that are not verified as part of the current implementation.
+
+When this document and the source code disagree, the current source code is the final authority.
+
+Future documentation updates should preserve the distinction between:
+
+```text
+Current Implementation
+```
+
+and:
+
+```text
+Future Recommendation
+```
+
+No future capability should be documented as implemented until it actually exists in the repository.
+
+```
+
+```
