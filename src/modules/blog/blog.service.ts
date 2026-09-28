@@ -2,6 +2,7 @@
 import { StatusCodes } from 'http-status-codes';
 import { prisma } from '../../configs/db';
 import AppError from '../../errorHelper/error';
+import { sanitizeRichText } from '../../utils/sanitize';
 
 const createBlog = async (payload: any) => {
   const existedBlog = await prisma.blog.findUnique({
@@ -15,6 +16,11 @@ const createBlog = async (payload: any) => {
       StatusCodes.BAD_REQUEST,
       'Duplicate slug! Required a unique slug',
     );
+  }
+
+  // Sanitize rich text content
+  if (payload.content) {
+    payload.content = sanitizeRichText(payload.content);
   }
 
   const newBlog = await prisma.blog.create({
@@ -39,6 +45,11 @@ const updateBlog = async (slug: string, payload: any) => {
         'Duplicate slug! Required a unique slug',
       );
     }
+  }
+
+  // Sanitize rich text content
+  if (payload.content) {
+    payload.content = sanitizeRichText(payload.content);
   }
 
   const modifiedBlog = await prisma.blog.update({
