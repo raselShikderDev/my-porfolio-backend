@@ -240,7 +240,6 @@ const processRawError = (err: any): typeof AppError.prototype => {
     res.status(error.statusCode).json({
         success: false,
         message: error.message,
-        errors: error,
         stack: envVars.NODE_ENV === 'development' ? error.stack : undefined,
     });
 };
