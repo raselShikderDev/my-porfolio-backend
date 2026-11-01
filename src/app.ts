@@ -7,6 +7,7 @@ import cors from 'cors';
 import compression from 'compression';
 import notFound from './middlewares/notFound';
 import globalError from './middlewares/globalError';
+import morgan from "morgan";
 import { appRoutes } from './routes/mainRouter';
 import { healthCheck } from './routes/health/health.controller';
 import cookieParser from 'cookie-parser';
@@ -20,6 +21,7 @@ app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(morgan("dev"));
 
 app.use(
   cors({
