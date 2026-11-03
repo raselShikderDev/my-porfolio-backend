@@ -3,50 +3,50 @@ import { prisma } from '../../configs/db';
 import AppError from '../../errorHelper/error';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const createResume = async (payload: any) => {
-  const existedResume = await prisma.resume.findUnique({
+const createResume = async (payload: {
+  userId: number;
+  resumeUrl: string;
+  fileName?: string;
+}) => {
+  return prisma.resume.upsert({
     where: {
       userId: payload.userId,
     },
+    update: {
+      resumeUrl: payload.resumeUrl,
+      fileName: payload.fileName,
+      uploadedAt: new Date(),
+    },
+    create: {
+      userId: payload.userId,
+      resumeUrl: payload.resumeUrl,
+      fileName: payload.fileName,
+    },
   });
-
-  if (existedResume) {
-    throw new AppError(
-      StatusCodes.BAD_REQUEST,
-      'Resume already exists for this user. Please update the existing one.',
-    );
-  }
-
-  const newResume = await prisma.resume.create({
-    data: payload,
-  });
-
-  if (!newResume) {
-    throw new AppError(StatusCodes.BAD_GATEWAY, 'Failed to create resume');
-  }
-  return newResume;
 };
 
 // Get single resume
-const getResume = async (userId: number) => {
+const getResume = async (adminUserId: number) => {
   const resume = await prisma.resume.findUnique({
     where: {
-      userId: userId,
+      userId: adminUserId,
     },
-    include: {
-      user: {
-        select: {
-          name: true,
-          email: true,
-        }
-      }
-    }
+    select: {
+      resumeUrl: true,
+      fileName: true,
+      uploadedAt: true,
+    },
   });
+
   if (!resume) {
-    throw new AppError(StatusCodes.NOT_FOUND, 'Resume not found');
+    throw new AppError(
+      StatusCodes.NOT_FOUND,
+      'Resume not found',
+    );
   }
+
   return resume;
-};;
+};
 
 // Get all resumes
 const getAllResumes = async () => {
