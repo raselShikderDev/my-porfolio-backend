@@ -31,7 +31,7 @@ const mainRoutes = [
     route: blogRouter,
   },
   {
-    path: '/resumes',
+    path: '/resume',
     route: resumeRoute,
   },
   {
