@@ -1,5 +1,3 @@
-import { PrismaClient } from "@prisma/client"
-import { prismaConfig } from "./prisma.config"
+import { PrismaClient } from "@prisma/client";
 
-// Initialize PrismaClient with datasource configuration moved to prisma.config.ts
-export const prisma = new PrismaClient(prismaConfig)
+export const prisma = new PrismaClient();
