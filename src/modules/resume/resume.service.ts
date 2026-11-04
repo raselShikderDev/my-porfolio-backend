@@ -3,14 +3,10 @@ import { prisma } from '../../configs/db';
 import AppError from '../../errorHelper/error';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const createResume = async (payload: {
-  userId: number;
-  resumeUrl: string;
-  fileName?: string;
-}) => {
+const createResume = async (payload: { resumeUrl: string; fileName?: string; }, userid:number) => {
   return prisma.resume.upsert({
     where: {
-      userId: payload.userId,
+      userId: userid as number,
     },
     update: {
       resumeUrl: payload.resumeUrl,
@@ -18,7 +14,7 @@ const createResume = async (payload: {
       uploadedAt: new Date(),
     },
     create: {
-      userId: payload.userId,
+      userId: userid as number,
       resumeUrl: payload.resumeUrl,
       fileName: payload.fileName,
     },

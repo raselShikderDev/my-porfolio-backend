@@ -8,7 +8,8 @@ import { resumeService } from './resume.service';
 // Creating a resume
 const createResume = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    const newResume = await resumeService.createResume(req.body);
+     const userid = Number(req.user?.id);
+    const newResume = await resumeService.createResume(req.body, userid as number);
 
     sendResonse(res, {
       success: true,
@@ -23,8 +24,8 @@ const createResume = asyncFunc(
 const getResume = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
     const resumeId = parseInt(req.params.id);
-    const resume = await resumeService.getResume(resumeId);
-
+    const resume = await resumeService.getResume(resumeId,);
+   
     sendResonse(res, {
       success: true,
       statusCode: StatusCodes.OK,
