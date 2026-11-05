@@ -5,6 +5,8 @@ import AppError from '../../errorHelper/error';
 import { sanitizeRichText } from '../../utils/sanitize';
 
 const createBlog = async (payload: any) => {
+  console.log("Payload from createblog service before processing: ", payload);
+
   const existedBlog = await prisma.blog.findUnique({
     where: {
       slug: payload.slug,
@@ -23,9 +25,12 @@ const createBlog = async (payload: any) => {
     payload.content = sanitizeRichText(payload.content);
   }
 
+  console.log("Payload after processing using sanitizeRichText: ", payload);
+
   const newBlog = await prisma.blog.create({
     data: payload,
   });
+  console.log("New blog created: ", newBlog);
   if (!newBlog.id) {
     throw new AppError(StatusCodes.CREATED, 'Blog creation failed');
   }
