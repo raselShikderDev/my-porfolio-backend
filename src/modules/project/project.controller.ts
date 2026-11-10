@@ -41,13 +41,13 @@ const editProject = asyncFunc(
 // get a project
 const removeProject = asyncFunc(
   async (req: Request, res: Response, next: NextFunction) => {
-    const userId = Number(req.params.id);
-    const newProject = await projectServices.removeProject(userId);
+    const projectId = Number(req.params.id);
+    const deletedProject = await projectServices.removeProject(projectId);
     sendResonse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: 'Project successfully deleted',
-      data: newProject,
+      data: deletedProject,
     });
   },
 );
