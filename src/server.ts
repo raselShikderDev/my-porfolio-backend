@@ -5,6 +5,8 @@ import app from './app';
 import { prisma } from './configs/db.js';
 import { seedOwner } from './utils/seedOwner';
 
+// Removed temp morgan declaration as it's now handled by src/modules/morgan.d.ts
+
 let server: Server | null = null;
 
 async function connectDB() {
